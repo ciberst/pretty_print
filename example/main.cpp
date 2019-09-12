@@ -5,7 +5,8 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include "include/pretty_print/pretty_print.hpp"
+#include "pretty_print/pretty_print.hpp"
+
 int main() {
 	using namespace std::string_literals;
 	using pretty::pretty_print;
