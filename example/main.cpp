@@ -7,6 +7,18 @@
 #include <variant>
 #include <vector>
 
+
+struct user_data {
+    int a = 42;
+    std::string str = "hello";
+};
+
+std::ostream& operator<<(std::ostream& out, const user_data& data) {
+    out << data.str << ", " << data.a;
+    return out;
+}
+
+
 int main() {
 	using namespace std::string_literals;
 	using pretty::pretty_print;
@@ -31,6 +43,8 @@ int main() {
         std::variant<int, std::string, std::pair<double, int>>{std::pair{2.5, 1}},
         std::variant<int, std::string, std::pair<double, int>>{}};
 
+    user_data user_data;
+
     pretty_print(std::cout, vector_varints) << std::endl;
     pretty_print(std::cout, variant) << std::endl;
 	pretty_print(std::cout, pair) << std::endl;
@@ -43,6 +57,7 @@ int main() {
 	pretty_print(std::cout, words1) << std::endl;
 	pretty_print(std::cout, opt) << std::endl;
 	pretty_print(std::cout, null_opt) << std::endl;
+    pretty_print(std::cout, user_data) << std::endl;
 
 	std::cout << "=====================================" << std::endl;
 
@@ -57,7 +72,8 @@ int main() {
               << pretty_print(tuple) << std::endl
               << pretty_print(words1) << std::endl
               << pretty_print(opt) << std::endl
-              << pretty_print(null_opt) << std::endl;
+              << pretty_print(null_opt) << std::endl
+              << pretty_print(user_data) << std::endl;
 
 
 	return 0;
