@@ -2,16 +2,14 @@
 #include <iostream>
 #include <map>
 #include <optional>
+#include <pretty_print/pretty_print.hpp>
 #include <unordered_map>
 #include <variant>
 #include <vector>
 
-#include "pretty_print/pretty_print.hpp"
-
 int main() {
 	using namespace std::string_literals;
 	using pretty::pretty_print;
-
 	std::vector<int> a = {1, 2, 3, 4};
 	std::map<int, int> map = {{1, 2}, {2, 3}, {3, 4}};
 	auto pair = std::make_pair("123"s, 12);
@@ -48,7 +46,9 @@ int main() {
 
 	std::cout << "=====================================" << std::endl;
 
-	std::cout << pretty_print(pair) << std::endl
+    std::cout << pretty_print(vector_varints) << std::endl
+              << pretty_print(variant) << std::endl
+              << pretty_print(pair) << std::endl
               << pretty_print(a) << std::endl
               << pretty_print("hello") << std::endl
               << pretty_print(map) << std::endl
