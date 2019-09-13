@@ -1,5 +1,5 @@
 language: cpp
-dist: bionic
+dist: xenial
 
 # compilers to add to build matrix
 
@@ -14,7 +14,8 @@ matrix:
             - g++-9
       env:
         - MATRIX_EVAL="CC=gcc-9 CXX=g++-9"
-  
+
+
 # scripts to run before build
 before_script:
   - mkdir build
