@@ -11,6 +11,7 @@ pretty_print - это кроссплатформенная библиотека 
 #include <pretty_print/pretty_print.hpp>
 #include <vector>
 int main() {
+    using pretty::pretty_print;
     std::vector<int> a = {1, 2, 3, 4};
     pretty_print(std::cout, a) << std::endl;
     return 0;
@@ -22,3 +23,6 @@ int main() {
 ```
 {1, 2, 3, 4}
 ```
+
+## Требования к компилятору
+* Поддержка C++17
