@@ -21,6 +21,8 @@ std::ostream& operator<<(std::ostream& out, const user_data& data) {
 int main() {
     using namespace std::string_literals;
     using pretty::pretty_print;
+    using pretty::pretty_print_ti;
+
     std::vector<int> a = {1, 2, 3, 4};
     std::map<int, int> map = {{1, 2}, {2, 3}, {3, 4}};
     auto pair = std::make_pair("123"s, 12);
@@ -59,6 +61,22 @@ int main() {
     pretty_print(std::cout, opt) << std::endl;
     pretty_print(std::cout, null_opt) << std::endl;
     pretty_print(std::cout, user_data) << std::endl;
+
+    std::cout << "=====================================" << std::endl;
+
+    pretty_print_ti(std::cout, vector_varints) << std::endl;
+    pretty_print_ti(std::cout, variant) << std::endl;
+    pretty_print_ti(std::cout, pair) << std::endl;
+    pretty_print_ti(std::cout, a) << std::endl;
+    pretty_print_ti(std::cout, "hello") << std::endl;
+    pretty_print_ti(std::cout, map) << std::endl;
+    pretty_print_ti(std::cout, mapmap) << std::endl;
+    pretty_print_ti(std::cout, c_arr) << std::endl;
+    pretty_print_ti(std::cout, tuple) << std::endl;
+    pretty_print_ti(std::cout, words1) << std::endl;
+    pretty_print_ti(std::cout, opt) << std::endl;
+    pretty_print_ti(std::cout, null_opt) << std::endl;
+    pretty_print_ti(std::cout, user_data) << std::endl;
 
     std::cout << "=====================================" << std::endl;
 
