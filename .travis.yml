@@ -1,12 +1,16 @@
 language: cpp
+dist: bionic
 
 # compilers to add to build matrix
 compiler:
   - gcc
   - clang
-
+  
 # scripts to run before build
 before_script:
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq gcc-9
   - mkdir build
   - cd build
   - cmake ../example
