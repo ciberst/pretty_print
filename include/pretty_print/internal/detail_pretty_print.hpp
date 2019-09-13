@@ -1,5 +1,5 @@
 #pragma once
-#include <iomanip>	// std::quoted
+#include <iomanip>  // std::quoted
 #include <type_traits>
 #include <variant>
 
@@ -10,18 +10,17 @@ namespace pretty::detail {
     template <typename T>
     struct is_iterable<T, std::void_t<decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>>
         : std::true_type {};
+    static_assert(!is_iterable<std::variant<int, int>>::value, "test failed");
+    static_assert(is_iterable<std::string>::value, "test failed");
 
     template <typename, typename = void>
     struct has_ostream_operator : std::false_type {};
-
     template <typename T>
     struct has_ostream_operator<T, decltype(void(std::declval<std::ostream&>() << std::declval<const T&>()))>
         : std::true_type {};
-
-    static_assert(!is_iterable<std::pair<int, int>>::value, "test failed");
-    static_assert(is_iterable<std::string>::value, "test failed");
     static_assert(!has_ostream_operator<std::pair<int, int>>::value, "test failed");
     static_assert(has_ostream_operator<std::string>::value, "test failed");
+
 
     template <typename T, size_t N,
               typename = std::enable_if_t<std::is_same_v<T, char> || std::is_same_v<T, unsigned char>>>
@@ -33,17 +32,17 @@ namespace pretty::detail {
 
     inline auto quoted_helper(const std::string& s) noexcept { return std::quoted(s); }
 
+    inline auto quoted_helper(std::string& s) noexcept { return std::quoted(s); }
+
     template <class CharT, class Traits>
     auto quoted_helper(std::basic_string_view<CharT, Traits> s) noexcept {
         return std::quoted(s);
     }
 
-    inline auto quoted_helper(std::string& s) noexcept { return std::quoted(s); }
-
     template <class T>
     decltype(auto) quoted_helper(T&& v) noexcept {
         return std::forward<T>(v);
-	}
+    }
 
     template <std::size_t I, std::size_t N>
     struct print_tuple_impl {
@@ -74,15 +73,15 @@ namespace pretty::detail {
                 }
                 out << "}";
             } else if constexpr (detail::has_ostream_operator<T>::value) {
-				out << detail::quoted_helper(data);
+                out << detail::quoted_helper(data);
                 return out;
-			}
-            else {
-                static_assert(detail::has_ostream_operator<T>::value, "not support [ostream& operator<<(ostream& out, const T& data)]");
+            } else {
+                static_assert(detail::has_ostream_operator<T>::value,
+                              "not support [ostream& operator<<(ostream& out, const T& data)]");
             }
 
             return out;
-		}
+        }
 
         template <class Stream, typename T, typename V,
                   typename = std::enable_if_t<!detail::has_ostream_operator<std::pair<T, V>>::value>>
@@ -95,7 +94,7 @@ namespace pretty::detail {
                 ostream_impl(out, detail::quoted_helper(data.second));
             }
             return out;
-		}
+        }
 
         template <class Stream, typename... Args,
                   typename = std::enable_if_t<!detail::has_ostream_operator<std::tuple<Args...>>::value>>
@@ -115,7 +114,7 @@ namespace pretty::detail {
                 out << "NULL";
             }
             return out;
-		}
+        }
 
         template <class Stream, typename T, typename... Ts>
         static Stream& ostream_impl(Stream& out, const std::variant<T, Ts...>& data) {
@@ -140,6 +139,5 @@ namespace pretty::detail {
         out << "]";
         return out;
     }
-
 
 }  // namespace pretty::detail
