@@ -44,7 +44,6 @@ int main() {
 
     user_data user_data;
 
-
     // pretty_print(std::cout, std::any{123}) << std::endl;
 
     pretty_print(std::cout, vector_varints) << std::endl;
