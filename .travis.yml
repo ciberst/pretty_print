@@ -2,15 +2,21 @@ language: cpp
 dist: bionic
 
 # compilers to add to build matrix
-compiler:
-  - gcc
-  - clang
+
+matrix:
+  include:
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9
+      env:
+        - MATRIX_EVAL="CC=gcc-9 CXX=g++-9"
   
 # scripts to run before build
 before_script:
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq gcc-9
   - mkdir build
   - cd build
   - cmake ../example
