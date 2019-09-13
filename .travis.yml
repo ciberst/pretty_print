@@ -15,7 +15,8 @@ matrix:
       env:
         - MATRIX_EVAL="CC=gcc-9 CXX=g++-9"
 
-
+before_install:
+  - eval "${MATRIX_EVAL}"
 # scripts to run before build
 before_script:
   - mkdir build
