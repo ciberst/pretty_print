@@ -1,0 +1,15 @@
+language: cpp
+
+# compilers to add to build matrix
+compiler:
+  - gcc
+  - clang
+
+# scripts to run before build
+before_script:
+  - mkdir build
+  - cd build
+  - cmake ../example
+
+script:
+  - cmake --build . 
