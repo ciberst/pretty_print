@@ -73,12 +73,15 @@ namespace pretty::detail {
                     delimiter = ", ";
                 }
                 out << "}";
-            } else {
-                out << detail::quoted_helper(data);
+            } else if constexpr (detail::has_ostream_operator<T>::value) {
+				out << detail::quoted_helper(data);
                 return out;
 			}
+            else {
+                static_assert(detail::has_ostream_operator<T>::value, "not support [ostream& operator<<(ostream& out, const T& data)]");
+            }
 
-			return out;
+            return out;
 		}
 
         template <class Stream, typename T, typename V,

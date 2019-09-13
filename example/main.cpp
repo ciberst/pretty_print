@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-
+#include <any>
 
 struct user_data {
     int a = 42;
@@ -44,6 +44,9 @@ int main() {
         std::variant<int, std::string, std::pair<double, int>>{}};
 
     user_data user_data;
+
+
+    //pretty_print(std::cout, std::any{123}) << std::endl;
 
     pretty_print(std::cout, vector_varints) << std::endl;
     pretty_print(std::cout, variant) << std::endl;
