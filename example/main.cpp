@@ -122,5 +122,7 @@ int main() {
     std::cout << pretty_print_args(vector_varints, variant) << std::endl;
     std::cout << "=====================================" << std::endl;
 
+    pretty::print_line(std::cout, vector_varints, variant);
+
     return 0;
 }

@@ -81,7 +81,6 @@ namespace pretty {
         return out;
     }
 
-
     /** pretty data print
      * @param args variadic data
      * @return std::string */
@@ -91,5 +90,17 @@ namespace pretty {
         ((result.append(pretty_print(std::forward<Args>(args))).append(" ")), ...);
         return result;
     }
+
+
+    /** pretty data print line
+     * @param out Stream
+     * @param args variadic data
+     * @return Stream */
+    template <class Stream, class... Args, typename = std::enable_if_t<(sizeof...(Args) > 1)>>
+    void print_line(Stream& out, Args&&... args) {
+        ((pretty_print(out, std::forward<Args>(args)) << ' '), ...);
+        out << '\n';
+    }
+
 
 }  // namespace pretty
