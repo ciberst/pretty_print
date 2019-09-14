@@ -21,6 +21,7 @@ std::ostream& operator<<(std::ostream& out, const user_data& data) {
 int main() {
     using namespace std::string_literals;
     using pretty::pretty_print;
+    using pretty::pretty_print_args;
     using pretty::pretty_print_ti;
 
     std::vector<int> a = {1, 2, 3, 4};
@@ -112,8 +113,14 @@ int main() {
 
     std::cout << "=====================================" << std::endl;
 
-    pretty_print(std::cout, vector_varints, variant) << std::endl;
-    pretty_print(std::cout, "hello", "world", 123, 456) << std::endl;
-    pretty_print(std::cout, pair, a) << std::endl;
+    pretty_print_args(std::cout, vector_varints, variant) << std::endl;
+    pretty_print_args(std::cout, "hello", "world", 123, 456) << std::endl;
+    pretty_print_args(std::cout, "hello", "world", 123, 456);
+    pretty_print_args(std::cout, pair, a) << std::endl;
+
+    std::cout << "=====================================" << std::endl;
+    std::cout << pretty_print_args(vector_varints, variant) << std::endl;
+    std::cout << "=====================================" << std::endl;
+
     return 0;
 }

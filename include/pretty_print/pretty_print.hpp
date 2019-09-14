@@ -8,7 +8,6 @@
 
 namespace pretty {
 
-
     /** pretty C-array print
      * @param out Stream
      * @param data C-array
@@ -72,11 +71,25 @@ namespace pretty {
         return std::string(typeid(T).name()).append("@").append(pretty_print(data));
     }
 
-
+    /** pretty data print
+     * @param out Stream
+     * @param args variadic data
+     * @return Stream */
     template <class Stream, class... Args, typename = std::enable_if_t<(sizeof...(Args) > 1)>>
-    constexpr Stream& pretty_print(Stream& out, Args&&... args) {
+    constexpr Stream& pretty_print_args(Stream& out, Args&&... args) {
         ((pretty_print(out, std::forward<Args>(args)) << ' '), ...);
         return out;
+    }
+
+
+    /** pretty data print
+     * @param args variadic data
+     * @return std::string */
+    template <class... Args, typename = std::enable_if_t<(sizeof...(Args) > 1)>>
+    std::string pretty_print_args(Args&&... args) {
+        std::string result;
+        ((result.append(pretty_print(std::forward<Args>(args))).append(" ")), ...);
+        return result;
     }
 
 }  // namespace pretty
