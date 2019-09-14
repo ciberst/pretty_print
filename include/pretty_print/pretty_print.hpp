@@ -73,12 +73,8 @@ namespace pretty {
     }
 
 
-    template <class Stream, class T1, class T2, class... Args>
-    constexpr Stream& pretty_print(Stream& out, T1&& data1, T2&& data2, Args&&... args) {
-        pretty_print(out, std::forward<T1>(data1));
-        out << ' ';
-        pretty_print(out, std::forward<T2>(data2));
-        out << ' ';
+    template <class Stream, class... Args, typename = std::enable_if_t<(sizeof...(Args) > 1)>>
+    constexpr Stream& pretty_print(Stream& out, Args&&... args) {
         ((pretty_print(out, std::forward<Args>(args)) << ' '), ...);
         return out;
     }

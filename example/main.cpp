@@ -114,5 +114,6 @@ int main() {
 
     pretty_print(std::cout, vector_varints, variant) << std::endl;
     pretty_print(std::cout, "hello", "world", 123, 456) << std::endl;
+    pretty_print(std::cout, pair, a) << std::endl;
     return 0;
 }
