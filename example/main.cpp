@@ -94,6 +94,25 @@ int main() {
               << pretty_print(null_opt) << std::endl
               << pretty_print(user_data) << std::endl;
 
+    std::cout << "=====================================" << std::endl;
 
+    std::cout << pretty_print_ti(vector_varints) << std::endl
+              << pretty_print_ti(variant) << std::endl
+              << pretty_print_ti(pair) << std::endl
+              << pretty_print_ti(a) << std::endl
+              << pretty_print_ti("hello") << std::endl
+              << pretty_print_ti(map) << std::endl
+              << pretty_print_ti(mapmap) << std::endl
+              << pretty_print_ti(c_arr) << std::endl
+              << pretty_print_ti(tuple) << std::endl
+              << pretty_print_ti(words1) << std::endl
+              << pretty_print_ti(opt) << std::endl
+              << pretty_print_ti(null_opt) << std::endl
+              << pretty_print_ti(user_data) << std::endl;
+
+    std::cout << "=====================================" << std::endl;
+
+    pretty_print(std::cout, vector_varints, variant) << std::endl;
+    pretty_print(std::cout, "hello", "world", 123, 456) << std::endl;
     return 0;
 }
