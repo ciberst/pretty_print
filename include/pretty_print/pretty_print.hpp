@@ -1,6 +1,8 @@
 #pragma once
-#include <sstream>      // std::stringstream
+#include <sstream>  // std::stringstream
+#include <string_view>
 #include <type_traits>  // std::is_same_v
+#include <typeinfo>
 
 #include "internal/detail_pretty_print.hpp"
 
@@ -11,7 +13,7 @@ namespace pretty {
      * @param data C-array
      * @return Stream */
     template <class Stream, typename T, size_t N>
-    constexpr Stream& pretty_print(Stream& out, const T (&data)[N]) {
+    constexpr Stream& print(Stream& out, const T (&data)[N]) {
         if constexpr (!(std::is_same_v<T, char> || std::is_same_v<T, unsigned char>))
             detail::print_array(out, data);
         else
@@ -24,7 +26,7 @@ namespace pretty {
      * @param data data
      * @return Stream */
     template <class Stream, class T>
-    Stream& pretty_print(Stream& out, const T& data) {
+    constexpr Stream& print(Stream& out, const T& data) {
         detail::ostream::ostream_impl<0>(out, data);
         return out;
     }
@@ -33,9 +35,9 @@ namespace pretty {
      * @param data data
      * @return std::string */
     template <class T>
-    std::string pretty_print(const T& data) {
+    std::string print(const T& data) {
         std::stringstream out;
-        pretty_print(out, data);
+        print(out, data);
         return out.str();
     }
 
@@ -44,9 +46,9 @@ namespace pretty {
      * @param data C-array
      * @return Stream */
     template <class Stream, typename T, size_t N>
-    constexpr Stream& pretty_print_ti(Stream& out, const T (&data)[N]) {
+    constexpr Stream& print_ti(Stream& out, const T (&data)[N]) {
         out << typeid(T).name() << "[" << N << "]@";
-        pretty_print(out, data);
+        print(out, data);
         return out;
     }
 
@@ -55,9 +57,9 @@ namespace pretty {
      * @param data data
      * @return Stream */
     template <class Stream, class T>
-    Stream& pretty_print_ti(Stream& out, const T& data) {
+    constexpr Stream& print_ti(Stream& out, const T& data) {
         out << typeid(T).name() << "@";
-        pretty_print(out, data);
+        print(out, data);
         return out;
     }
 
@@ -65,8 +67,38 @@ namespace pretty {
      * @param data data
      * @return std::string */
     template <class T>
-    std::string pretty_print_ti(const T& data) {
-        return pretty_print(data);
+    std::string print_ti(const T& data) {
+        return std::string(typeid(T).name()).append("@").append(print(data));
+    }
+
+    /** pretty data print
+     * @param out Stream
+     * @param args variadic data
+     * @return Stream */
+    template <class Stream, class... Args, typename = std::enable_if_t<(sizeof...(Args) > 1)>>
+    constexpr Stream& print_args(Stream& out, Args&&... args) {
+        ((print(out, std::forward<Args>(args)) << ' '), ...);
+        return out;
+    }
+
+    /** pretty data print
+     * @param args variadic data
+     * @return std::string */
+    template <class... Args, typename = std::enable_if_t<(sizeof...(Args) > 1)>>
+    std::string print_args(Args&&... args) {
+        std::string result;
+        ((result.append(print(std::forward<Args>(args))).append(" ")), ...);
+        return result;
+    }
+
+    /** pretty data print line
+     * @param out Stream
+     * @param args variadic data
+     * @return Stream */
+    template <class Stream, class... Args, typename = std::enable_if_t<(sizeof...(Args) > 1)>>
+    void print_line(Stream& out, Args&&... args) {
+        ((print(out, std::forward<Args>(args)) << ' '), ...);
+        out << '\n';
     }
 
 }  // namespace pretty

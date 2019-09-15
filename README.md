@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/ciberst/pretty_print.svg?branch=master)](https://travis-ci.org/ciberst/pretty_print)
+
 # pretty_print
 pretty_print is a cross-platform library for a pretty print of various data.
 
@@ -12,9 +13,8 @@ pretty_print - это кроссплатформенная библиотека 
 #include <pretty_print/pretty_print.hpp>
 #include <vector>
 int main() {
-    using pretty::pretty_print;
     std::vector<int> a = {1, 2, 3, 4};
-    pretty_print(std::cout, a) << std::endl;
+    pretty::print(std::cout, a) << std::endl;
     return 0;
 }
 ```

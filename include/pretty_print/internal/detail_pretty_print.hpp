@@ -65,13 +65,13 @@ namespace pretty::detail {
         static Stream& ostream_impl(Stream& out, const T& data) {
             if constexpr (detail::is_iterable<T>::value && !detail::has_ostream_operator<T>::value) {
                 std::string delimiter;
-                out << "{";
+                out << '{';
                 for (const auto& el : data) {
                     out << delimiter;
                     ostream_impl<Nested + 1>(out, detail::quoted_helper(el));
                     delimiter = ", ";
                 }
-                out << "}";
+                out << '}';
             } else if constexpr (detail::has_ostream_operator<T>::value) {
                 out << detail::quoted_helper(data);
                 return out;
@@ -89,11 +89,11 @@ namespace pretty::detail {
             if constexpr (detail::has_ostream_operator<std::pair<T, V>>::value)
                 out << data;
             else {
-                if (Nested) out << "{";
+                if (!!Nested) out << '{';
                 ostream_impl<Nested + 1>(out, detail::quoted_helper(data.first));
                 out << ": ";
                 ostream_impl<Nested + 1>(out, detail::quoted_helper(data.second));
-                if (Nested) out << "}";
+                if (!!Nested) out << '}';
             }
             return out;
         }
@@ -132,13 +132,13 @@ namespace pretty::detail {
     template <class Stream, typename T, size_t N>
     Stream& print_array(Stream& out, const T (&data)[N]) {
         std::string delimiter;
-        out << "[";
+        out << '[';
         for (const auto& el : data) {
             out << delimiter;
             ostream::ostream_impl<0>(out, detail::quoted_helper(el));
             delimiter = ", ";
         }
-        out << "]";
+        out << ']';
         return out;
     }
 
