@@ -10,16 +10,23 @@ namespace pretty::detail {
     template <typename T>
     struct is_iterable<T, std::void_t<decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>>
         : std::true_type {};
-    static_assert(!is_iterable<std::variant<int, int>>::value, "test failed");
-    static_assert(is_iterable<std::string>::value, "test failed");
+    template <typename T>
+    constexpr bool is_iterable_v = is_iterable<T>::value;
+
+    static_assert(!is_iterable_v<std::variant<int, int>>, "test failed");
+    static_assert(is_iterable_v<std::string>, "test failed");
 
     template <typename, typename = void>
     struct has_ostream_operator : std::false_type {};
     template <typename T>
     struct has_ostream_operator<T, decltype(void(std::declval<std::ostream&>() << std::declval<const T&>()))>
         : std::true_type {};
-    static_assert(!has_ostream_operator<std::pair<int, int>>::value, "test failed");
-    static_assert(has_ostream_operator<std::string>::value, "test failed");
+
+    template <typename T>
+    constexpr bool has_ostream_operator_v = has_ostream_operator<T>::value;
+
+    static_assert(!has_ostream_operator_v<std::pair<int, int>>, "test failed");
+    static_assert(has_ostream_operator_v<std::string>, "test failed");
 
 
     template <typename T, size_t N,
@@ -63,7 +70,7 @@ namespace pretty::detail {
     struct ostream {
         template <size_t Nested, class Stream, class T>
         static Stream& ostream_impl(Stream& out, const T& data) {
-            if constexpr (detail::is_iterable<T>::value && !detail::has_ostream_operator<T>::value) {
+            if constexpr (detail::is_iterable_v<T> && !detail::has_ostream_operator_v<T>) {
                 std::string delimiter;
                 out << '{';
                 for (const auto& el : data) {
@@ -72,11 +79,11 @@ namespace pretty::detail {
                     delimiter = ", ";
                 }
                 out << '}';
-            } else if constexpr (detail::has_ostream_operator<T>::value) {
+            } else if constexpr (detail::has_ostream_operator_v<T>) {
                 out << detail::quoted_helper(data);
                 return out;
             } else {
-                static_assert(detail::has_ostream_operator<T>::value,
+                static_assert(detail::has_ostream_operator_v<T>,
                               "not support [ostream& operator<<(ostream& out, const T& data)]");
             }
 
@@ -84,9 +91,9 @@ namespace pretty::detail {
         }
 
         template <size_t Nested, class Stream, typename T, typename V,
-                  typename = std::enable_if_t<!detail::has_ostream_operator<std::pair<T, V>>::value>>
+                  typename = std::enable_if_t<!detail::has_ostream_operator_v<std::pair<T, V>>>>
         static Stream& ostream_impl(Stream& out, const std::pair<T, V>& data) {
-            if constexpr (detail::has_ostream_operator<std::pair<T, V>>::value)
+            if constexpr (detail::has_ostream_operator_v<std::pair<T, V>>)
                 out << data;
             else {
                 if (!!Nested) out << '{';
@@ -99,16 +106,16 @@ namespace pretty::detail {
         }
 
         template <size_t Nested, class Stream, typename... Args,
-                  typename = std::enable_if_t<!detail::has_ostream_operator<std::tuple<Args...>>::value>>
+                  typename = std::enable_if_t<!detail::has_ostream_operator_v<std::tuple<Args...>>>>
         static Stream& ostream_impl(Stream& out, const std::tuple<Args...>& data) {
             out << "(";
-            detail::print_tuple_impl<0, std::tuple_size<std::tuple<Args...>>::value>::print(out, data);
+            detail::print_tuple_impl<0, std::tuple_size_v<std::tuple<Args...>>>::print(out, data);
             out << ")";
             return out;
         }
 
         template <size_t Nested, class Stream, typename T,
-                  typename = std::enable_if_t<!detail::has_ostream_operator<std::optional<T>>::value>>
+                  typename = std::enable_if_t<!detail::has_ostream_operator_v<std::optional<T>>>>
         static Stream& ostream_impl(Stream& out, const std::optional<T>& data) {
             if (data) {
                 ostream_impl<Nested + 1>(out, detail::quoted_helper(data.value()));
