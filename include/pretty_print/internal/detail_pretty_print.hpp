@@ -11,7 +11,7 @@ namespace pretty::detail {
     struct is_iterable<T, std::void_t<decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>>
         : std::true_type {};
     template <typename T>
-    constexpr bool is_iterable_v = is_iterable<T>::value;
+    inline constexpr bool is_iterable_v = is_iterable<T>::value;
 
     static_assert(!is_iterable_v<std::variant<int, int>>, "test failed");
     static_assert(is_iterable_v<std::string>, "test failed");
@@ -23,14 +23,39 @@ namespace pretty::detail {
         : std::true_type {};
 
     template <typename Stream, typename T>
-    constexpr bool has_ostream_operator_v = has_ostream_operator<Stream, T>::value;
+    inline constexpr bool has_ostream_operator_v = has_ostream_operator<Stream, T>::value;
 
     static_assert(!has_ostream_operator_v<std::ostream, std::pair<int, int>>, "test failed");
     static_assert(has_ostream_operator_v<std::ostream, std::string>, "test failed");
 
+    template <typename T, typename T1, typename... Args>
+    struct is_same_any_of {
+        static constexpr bool value = std::is_same_v<T, T1> || (std::is_same_v<T, Args> || ...);
+    };
+    template <typename T, typename T1, typename... Args>
+    inline constexpr bool is_same_any_of_v = is_same_any_of<T, T1, Args...>::value;
 
-    template <typename T, size_t N,
-              typename = std::enable_if_t<std::is_same_v<T, char> || std::is_same_v<T, unsigned char>>>
+    static_assert(is_same_any_of_v<char, int, char, double>, "test failed");
+
+    template <class T>
+    struct make_signed_or_return {
+        using type = std::conditional_t<std::is_signed_v<T>, T, typename std::make_signed_t<T>>;
+    };
+    template <class T>
+    using make_signed_or_return_t = typename make_signed_or_return<T>::type;
+
+    static_assert(std::is_same_v<char, make_signed_or_return_t<char>>, "test failed");
+    static_assert(std::is_same_v<signed char, make_signed_or_return_t<unsigned char>>, "test failed");
+
+
+    template <typename T>
+    static constexpr bool is_char_type_v =
+        is_same_any_of_v<make_signed_or_return_t<T>, signed char, char, char16_t, char32_t, wchar_t>;
+
+    static_assert(is_char_type_v<char>, "test failed");
+    static_assert(is_char_type_v<unsigned char>, "test failed");
+
+    template <typename T, size_t N, typename = std::enable_if_t<is_char_type_v<T>>>
     auto quoted_helper(const T (&s)[N]) noexcept {
         return std::quoted(s);
     }
