@@ -39,23 +39,19 @@ namespace pretty::detail {
 
     static_assert(is_same_any_of_v<char, int, char, double>, "test failed");
 
-    template <class T>
-    struct make_signed_or_return {
-        using type = std::conditional_t<std::is_signed_v<T>, T, typename std::make_signed_t<T>>;
-    };
-    template <class T>
-    using make_signed_or_return_t = typename make_signed_or_return<T>::type;
-
-    static_assert(std::is_same_v<char, make_signed_or_return_t<char>>, "test failed");
-    static_assert(std::is_same_v<signed char, make_signed_or_return_t<unsigned char>>, "test failed");
-
-
     template <typename T>
     static constexpr bool is_char_type_v =
-        is_same_any_of_v<make_signed_or_return_t<T>, signed char, char, char16_t, char32_t, wchar_t>;
+        is_same_any_of_v<T, unsigned char, signed char, char, char16_t, char32_t, wchar_t>;
 
     static_assert(is_char_type_v<char>, "test failed");
-    static_assert(is_char_type_v<unsigned char>, "test failed");
+    static_assert(is_char_type_v<signed char>, "test failed");
+    static_assert(is_char_type_v<char>, "test failed");
+    static_assert(is_char_type_v<char16_t>, "test failed");
+    static_assert(is_char_type_v<char>, "test failed");
+    static_assert(is_char_type_v<char32_t>, "test failed");
+    static_assert(is_char_type_v<wchar_t>, "test failed");
+    static_assert(!is_char_type_v<uint16_t>, "test failed");
+    static_assert(!is_char_type_v<uint32_t>, "test failed");
 
     template <typename T, size_t N, typename = std::enable_if_t<is_char_type_v<T>>>
     auto quoted_helper(const T (&s)[N]) noexcept {
