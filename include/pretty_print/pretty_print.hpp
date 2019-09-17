@@ -14,7 +14,7 @@ namespace pretty {
      * @return Stream */
     template <class Stream, typename T, size_t N>
     constexpr Stream& print(Stream& out, const T (&data)[N]) {
-        if constexpr (!(std::is_same_v<T, char> || std::is_same_v<T, unsigned char>))
+        if constexpr (!(detail::is_char_type_v<T>))
             detail::print_array(out, data);
         else
             detail::ostream::ostream_impl<0>(out, data);

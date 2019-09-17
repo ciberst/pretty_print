@@ -1,0 +1,16 @@
+version: '{build}'
+
+image: Visual Studio 2019
+
+environment:
+  matrix:
+    - GENERATOR: "Visual Studio 16 2019"
+      CONFIG: Debug
+
+    - GENERATOR: "Visual Studio 16 2019"
+      CONFIG: Release
+
+build_script:
+  - ps: cd example
+  - cmake "-G%GENERATOR%" -H. -B_builds -DENABLE_TESTING=1
+  - cmake --build _builds --config "%CONFIG%"
