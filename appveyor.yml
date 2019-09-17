@@ -14,3 +14,5 @@ build_script:
   - ps: cd example
   - cmake "-G%GENERATOR%" -H. -B_builds -DENABLE_TESTING=1
   - cmake --build _builds --config "%CONFIG%"
+  - ps: cd _builds\$CONFIG\
+  - ps: .\example.exe
