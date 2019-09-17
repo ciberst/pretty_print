@@ -27,3 +27,91 @@ int main() {
 
 ## Требования к компилятору
 * Поддержка C++17
+
+
+## Обзор основных возможностей библиотеки
+
+### std::vector
+```cpp
+std::vector<int> a = {1, 2, 3, 4};
+pretty::print(std::cout, a) << std::endl;
+```
+Output
+```
+{1, 2, 3, 4}
+```
+### std::map
+
+```cpp
+std::map<int, int> map = {{1, 2}, {2, 3}, {3, 4}};
+pretty::print(std::cout, map) << std::endl;
+```
+Output
+```
+{{1: 2}, {2: 3}, {3: 4}}
+```
+### std::pair
+
+```cpp
+auto pair = std::make_pair("123"s, 12);
+pretty::print(std::cout, pair) << std::endl;
+```
+Output
+```
+"123": 12
+```
+
+### std::optional
+```cpp
+std::optional<std::string> opt{"string"s};
+pretty::print(std::cout, opt) << std::endl;
+```
+Output
+```
+"string"
+```
+
+### std::variant
+```cpp
+std::variant<int, std::string> variant;
+variant = "123";
+pretty::print(std::cout, variant) << std::endl;
+```
+Output
+```
+"123"
+```
+
+### std::tuple
+```cpp
+auto tuple = std::make_tuple("1", 2, 3, 4.5);
+pretty::print(std::cout, tuple) << std::endl;
+```
+Output
+```
+("1", 2, 3, 4.5)
+```
+### C-array and C-string
+```cpp
+int c_arr[] = {1, 2, 3, 4, 5, 6};
+pretty::print(std::cout, c_arr) << std::endl;
+pretty::print(std::cout, "hello") << std::endl;
+```
+Output
+```
+[1, 2, 3, 4, 5, 6]
+"hello"
+```
+
+### hardcore example :-)
+```cpp
+std::unordered_map<std::string, std::map<std::string, std::optional<int>>> mapmap = {
+        {"test"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, 4}}},
+        {"hello"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, 4}}},
+        {"world"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, {}}}}};
+pretty::print(std::cout, mapmap) << std::endl;
+```
+Output
+```
+{{"test": {{"1": 2}, {"2": 3}, {"3": 4}}}, {"world": {{"1": 2}, {"2": 3}, {"3": NULL}}}, {"hello": {{"1": 2}, {"2": 3}, {"3": 4}}}}
+```
