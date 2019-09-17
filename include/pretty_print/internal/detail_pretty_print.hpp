@@ -1,6 +1,8 @@
 #pragma once
 #include <iomanip>  // std::quoted
+#include <optional>
 #include <type_traits>
+#include <utility>
 #include <variant>
 
 namespace pretty::detail {

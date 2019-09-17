@@ -4,6 +4,7 @@
 #include <map>
 #include <optional>
 #include <pretty_print/pretty_print.hpp>
+#include <string>
 #include <unordered_map>
 #include <variant>
 #include <vector>
