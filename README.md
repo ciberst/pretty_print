@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/ciberst/pretty_print.svg?branch=master)](https://travis-ci.org/ciberst/pretty_print)
-
+[![Build status](https://ci.appveyor.com/api/projects/status/ognl9dahv7vkhwnf?svg=true)](https://ci.appveyor.com/project/ciberst/pretty-print)
 # pretty_print
 pretty_print is a cross-platform library for a pretty print of various data.
 
