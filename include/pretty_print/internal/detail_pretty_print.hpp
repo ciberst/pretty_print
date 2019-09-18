@@ -7,6 +7,7 @@
 
 namespace pretty::detail {
 
+
     template <typename T, typename = void>
     struct is_iterable : std::false_type {};
     template <typename T>
@@ -74,90 +75,106 @@ namespace pretty::detail {
         return std::forward<T>(v);
     }
 
-    template <std::size_t I, std::size_t N>
+
+    struct ostream {
+        template <size_t Nested, class Stream, class T>
+        static Stream& ostream_impl(Stream& out, const T& data);
+        template <size_t Nested, class Stream, typename T, typename V,
+                  typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::pair<T, V>>>>
+        static Stream& ostream_impl(Stream& out, const std::pair<T, V>& data);
+        template <size_t Nested, class Stream, typename... Args,
+                  typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::tuple<Args...>>>>
+        static Stream& ostream_impl(Stream& out, const std::tuple<Args...>& data);
+        template <size_t Nested, class Stream, typename T,
+                  typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::optional<T>>>>
+        static Stream& ostream_impl(Stream& out, const std::optional<T>& data);
+        template <size_t Nested, class Stream, typename T, typename... Ts>
+        static Stream& ostream_impl(Stream& out, const std::variant<T, Ts...>& data);
+    };
+
+    template <std::size_t Nested, std::size_t I, std::size_t N>
     struct print_tuple_impl {
         template <class Stream, class T>
         static void print(Stream& out, const T& value) {
             if (!!I) out << ", ";
-            out << detail::quoted_helper(std::get<I>(value));
-            print_tuple_impl<I + 1, N>::print(out, value);
+            ostream::ostream_impl<Nested>(out, std::get<I>(value));
+            // out << detail::quoted_helper(std::get<I>(value));
+            print_tuple_impl<Nested, I + 1, N>::print(out, value);
         }
     };
 
-    template <std::size_t I>
-    struct print_tuple_impl<I, I> {
+    template <std::size_t Nested, std::size_t I>
+    struct print_tuple_impl<Nested, I, I> {
         template <class Stream, class T>
         static void print(Stream&, const T&) noexcept {}
     };
 
-    struct ostream {
-        template <size_t Nested, class Stream, class T>
-        static Stream& ostream_impl(Stream& out, const T& data) {
-            if constexpr (detail::is_iterable_v<T> && !detail::has_ostream_operator_v<Stream, T>) {
-                std::string delimiter;
-                out << '{';
-                for (const auto& el : data) {
-                    out << delimiter;
-                    ostream_impl<Nested + 1>(out, detail::quoted_helper(el));
-                    delimiter = ", ";
-                }
-                out << '}';
-            } else if constexpr (detail::has_ostream_operator_v<Stream, T>) {
-                out << detail::quoted_helper(data);
-                return out;
-            } else {
-                static_assert(detail::has_ostream_operator_v<Stream, T>,
-                              "not support [ostream& operator<<(ostream& out, const T& data)]");
+    // struct ostream {
+    template <size_t Nested, class Stream, class T>
+    Stream& ostream::ostream_impl(Stream& out, const T& data) {
+        if constexpr (detail::is_iterable_v<T> && !detail::has_ostream_operator_v<Stream, T>) {
+            std::string delimiter;
+            out << '{';
+            for (const auto& el : data) {
+                out << delimiter;
+                ostream_impl<Nested + 1>(out, detail::quoted_helper(el));
+                delimiter = ", ";
             }
-
+            out << '}';
+        } else if constexpr (detail::has_ostream_operator_v<Stream, T>) {
+            out << detail::quoted_helper(data);
             return out;
+        } else {
+            static_assert(detail::has_ostream_operator_v<Stream, T>,
+                          "not support [ostream& operator<<(ostream& out, const T& data)]");
         }
 
-        template <size_t Nested, class Stream, typename T, typename V,
-                  typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::pair<T, V>>>>
-        static Stream& ostream_impl(Stream& out, const std::pair<T, V>& data) {
-            if constexpr (detail::has_ostream_operator_v<Stream, std::pair<T, V>>)
-                out << data;
-            else {
-                if (!!Nested) out << '{';
-                ostream_impl<Nested + 1>(out, detail::quoted_helper(data.first));
-                out << ": ";
-                ostream_impl<Nested + 1>(out, detail::quoted_helper(data.second));
-                if (!!Nested) out << '}';
-            }
-            return out;
-        }
+        return out;
+    }
 
-        template <size_t Nested, class Stream, typename... Args,
-                  typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::tuple<Args...>>>>
-        static Stream& ostream_impl(Stream& out, const std::tuple<Args...>& data) {
-            out << "(";
-            detail::print_tuple_impl<0, std::tuple_size_v<std::tuple<Args...>>>::print(out, data);
-            out << ")";
-            return out;
+    template <size_t Nested, class Stream, typename T, typename V, typename>
+    Stream& ostream::ostream_impl(Stream& out, const std::pair<T, V>& data) {
+        if constexpr (detail::has_ostream_operator_v<Stream, std::pair<T, V>>)
+            out << data;
+        else {
+            ///*if (!!Nested) */ out << '{';
+            ostream_impl<Nested + 1>(out, detail::quoted_helper(data.first));
+            out << ": ";
+            ostream_impl<Nested + 1>(out, detail::quoted_helper(data.second));
+            ///*if (!!Nested)*/ out << '}';
         }
+        return out;
+    }
 
-        template <size_t Nested, class Stream, typename T,
-                  typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::optional<T>>>>
-        static Stream& ostream_impl(Stream& out, const std::optional<T>& data) {
-            if (data) {
-                ostream_impl<Nested + 1>(out, detail::quoted_helper(data.value()));
-            } else {
-                out << "NULL";
-            }
-            return out;
-        }
+    template <size_t Nested, class Stream, typename... Args, typename>
+    Stream& ostream::ostream_impl(Stream& out, const std::tuple<Args...>& data) {
+        out << "(";
+        detail::print_tuple_impl<Nested, 0, std::tuple_size_v<std::tuple<Args...>>>::print(out, data);
+        out << ")";
+        return out;
+    }
 
-        template <size_t Nested, class Stream, typename T, typename... Ts>
-        static Stream& ostream_impl(Stream& out, const std::variant<T, Ts...>& data) {
-            if (data.index() != std::variant_npos) {
-                std::visit([&out](const auto& t) { ostream_impl<Nested + 1>(out, t); }, data);
-                return out;
-            }
-            out << "VARIANT_NPOS";
+    template <size_t Nested, class Stream, typename T, typename>
+    Stream& ostream::ostream_impl(Stream& out, const std::optional<T>& data) {
+        if (data) {
+            ostream_impl<Nested>(out, detail::quoted_helper(data.value()));
+        } else {
+            out << "null";
+        }
+        return out;
+    }
+
+    template <size_t Nested, class Stream, typename T, typename... Ts>
+    Stream& ostream::ostream_impl(Stream& out, const std::variant<T, Ts...>& data) {
+        if (data.index() != std::variant_npos) {
+            std::visit([&out](const auto& t) { ostream_impl<Nested>(out, t); }, data);
             return out;
         }
-    };
+        out << "VARIANT_NPOS";
+        return out;
+    }
+    //}; struct ostream
+
 
     template <class Stream, typename T, size_t N>
     Stream& print_array(Stream& out, const T (&data)[N]) {

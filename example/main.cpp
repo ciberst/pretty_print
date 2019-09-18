@@ -45,6 +45,13 @@ int main() {
 
     user_data user_data;
 
+
+    auto data_tuple = std::tie(a, map, pair, mapmap, tuple, words1, opt, null_opt, variant, vector_varints, user_data);
+
+    pretty::print(std::cout, data_tuple) << std::endl;
+
+    std::cout << "=====================================" << std::endl;
+
     // pretty::print(std::cout, std::any{123}) << std::endl;
 
     pretty::print(std::cout, vector_varints) << std::endl;
