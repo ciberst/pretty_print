@@ -41,7 +41,7 @@ namespace pretty::detail {
     static_assert(is_same_any_of_v<char, int, char, double>, "test failed");
 
     template <typename T>
-    static constexpr bool is_char_type_v =
+    inline constexpr bool is_char_type_v =
         is_same_any_of_v<T, unsigned char, signed char, char, char16_t, char32_t, wchar_t>;
 
     static_assert(is_char_type_v<char>, "test failed");
@@ -53,6 +53,16 @@ namespace pretty::detail {
     static_assert(is_char_type_v<wchar_t>, "test failed");
     static_assert(!is_char_type_v<uint16_t>, "test failed");
     static_assert(!is_char_type_v<uint32_t>, "test failed");
+
+
+    template <typename T, typename = void>
+    struct is_map : std::false_type {};
+    template <typename T>
+    struct is_map<T, std::void_t<typename T::key_type, typename T::mapped_type,
+                                 decltype(std::declval<T>()[std::declval<const typename T::key_type>()])>>
+        : std::true_type {};
+    template <typename T>
+    inline constexpr bool is_map_v = is_map<T>::value;
 
     template <typename T, size_t N, typename = std::enable_if_t<is_char_type_v<T>>>
     auto quoted_helper(const T (&s)[N]) noexcept {
@@ -114,13 +124,21 @@ namespace pretty::detail {
     Stream& ostream::ostream_impl(Stream& out, const T& data) {
         if constexpr (detail::is_iterable_v<T> && !detail::has_ostream_operator_v<Stream, T>) {
             std::string delimiter;
-            out << '{';
+            if (is_map_v<T>) {
+                out << '{';
+            } else {
+                out << '[';
+            }
             for (const auto& el : data) {
                 out << delimiter;
                 ostream_impl<Nested + 1>(out, detail::quoted_helper(el));
                 delimiter = ", ";
             }
-            out << '}';
+            if (is_map_v<T>) {
+                out << '}';
+            } else {
+                out << ']';
+            }
         } else if constexpr (detail::has_ostream_operator_v<Stream, T>) {
             out << detail::quoted_helper(data);
             return out;
