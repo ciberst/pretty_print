@@ -1,12 +1,16 @@
 #pragma once
 #include <iomanip>  // std::quoted
-#include <optional>
 #include <type_traits>
-#include <utility>
+#include <utility>  // std::pair
+
+#if __has_include(<variant>)
 #include <variant>
+#endif
+#if __has_include(<optional>)
+#include <optional>
+#endif
 
 namespace pretty::detail {
-
 
     template <typename T, typename = void>
     struct is_iterable : std::false_type {};
@@ -16,7 +20,9 @@ namespace pretty::detail {
     template <typename T>
     inline constexpr bool is_iterable_v = is_iterable<T>::value;
 
+#if __has_include(<variant>)
     static_assert(!is_iterable_v<std::variant<int, int>>, "test failed");
+#endif
     static_assert(is_iterable_v<std::string>, "test failed");
 
     template <typename Stream, typename, typename = void>
@@ -97,9 +103,13 @@ namespace pretty::detail {
         static Stream& ostream_impl(Stream& out, const std::tuple<Args...>& data);
         template <size_t Nested, class Stream, typename T,
                   typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::optional<T>>>>
+#if __has_include(<optional>)
         static Stream& ostream_impl(Stream& out, const std::optional<T>& data);
+#endif
         template <size_t Nested, class Stream, typename T, typename... Ts>
+#if __has_include(<variant>)
         static Stream& ostream_impl(Stream& out, const std::variant<T, Ts...>& data);
+#endif
     };
 
     template <std::size_t Nested, std::size_t I, std::size_t N>
@@ -108,7 +118,6 @@ namespace pretty::detail {
         static void print(Stream& out, const T& value) {
             if (!!I) out << ", ";
             ostream::ostream_impl<Nested>(out, std::get<I>(value));
-            // out << detail::quoted_helper(std::get<I>(value));
             print_tuple_impl<Nested, I + 1, N>::print(out, value);
         }
     };
@@ -119,7 +128,6 @@ namespace pretty::detail {
         static void print(Stream&, const T&) noexcept {}
     };
 
-    // struct ostream {
     template <size_t Nested, class Stream, class T>
     Stream& ostream::ostream_impl(Stream& out, const T& data) {
         if constexpr (detail::is_iterable_v<T> && !detail::has_ostream_operator_v<Stream, T>) {
@@ -172,6 +180,7 @@ namespace pretty::detail {
         return out;
     }
 
+#if __has_include(<optional>)
     template <size_t Nested, class Stream, typename T, typename>
     Stream& ostream::ostream_impl(Stream& out, const std::optional<T>& data) {
         if (data) {
@@ -181,7 +190,9 @@ namespace pretty::detail {
         }
         return out;
     }
+#endif
 
+#if __has_include(<variant>)
     template <size_t Nested, class Stream, typename T, typename... Ts>
     Stream& ostream::ostream_impl(Stream& out, const std::variant<T, Ts...>& data) {
         if (data.index() != std::variant_npos) {
@@ -191,8 +202,7 @@ namespace pretty::detail {
         out << "VARIANT_NPOS";
         return out;
     }
-    //}; struct ostream
-
+#endif
 
     template <class Stream, typename T, size_t N>
     Stream& print_array(Stream& out, const T (&data)[N]) {

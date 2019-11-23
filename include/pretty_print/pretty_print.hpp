@@ -1,8 +1,8 @@
 #pragma once
-#include <sstream>  // std::stringstream
-#include <string_view>
+#include <sstream>      // std::stringstream
+#include <string>       // std::string
 #include <type_traits>  // std::is_same_v
-#include <typeinfo>
+#include <typeinfo>     // std::type_info::name
 
 #include "internal/detail_pretty_print.hpp"
 
