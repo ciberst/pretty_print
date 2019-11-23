@@ -22,7 +22,7 @@ int main() {
 ## Output
 
 ```
-{1, 2, 3, 4}
+[1, 2, 3, 4]
 ```
 
 ## Требования к компилятору
@@ -38,7 +38,7 @@ pretty::print(std::cout, a) << std::endl;
 ```
 Output
 ```
-{1, 2, 3, 4}
+[1, 2, 3, 4]
 ```
 ### std::map
 
@@ -48,11 +48,12 @@ pretty::print(std::cout, map) << std::endl;
 ```
 Output
 ```
-{{1: 2}, {2: 3}, {3: 4}}
+{1: 2, 2: 3, 3: 4}
 ```
 ### std::pair
 
 ```cpp
+using namespace std::string_literals;
 auto pair = std::make_pair("123"s, 12);
 pretty::print(std::cout, pair) << std::endl;
 ```
@@ -105,6 +106,7 @@ Output
 
 ### hardcore example :-)
 ```cpp
+using namespace std::string_literals;
 std::unordered_map<std::string, std::map<std::string, std::optional<int>>> mapmap = {
         {"test"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, 4}}},
         {"hello"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, 4}}},
@@ -113,5 +115,5 @@ pretty::print(std::cout, mapmap) << std::endl;
 ```
 Output
 ```
-{{"test": {{"1": 2}, {"2": 3}, {"3": 4}}}, {"world": {{"1": 2}, {"2": 3}, {"3": NULL}}}, {"hello": {{"1": 2}, {"2": 3}, {"3": 4}}}}
+{"test": {"1": 2, "2": 3, "3": 4}, "world": {"1": 2, "2": 3, "3": null}, "hello": {"1": 2, "2": 3, "3": 4}}
 ```
