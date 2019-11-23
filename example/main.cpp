@@ -14,61 +14,75 @@ struct user_data {
     std::string str = "hello";
 };
 
+template <class T>
+T& operator,(T& val, const user_data empty) {
+    (void)empty;
+    return val;
+}
+template <class T>
+const T& operator,(const T& val, const user_data empty) {
+    (void)empty;
+    return val;
+}
+
 std::ostream& operator<<(std::ostream& out, const user_data& data) {
     out << data.str << ", " << data.a;
     return out;
 }
 
 void print_vector() {
-    std::vector<int> a = {1, 2, 3, 4};
-    pretty::print(std::cout, a) << std::endl;
+    std::vector<int> data = {1, 2, 3, 4};
+    pretty::print(std::cout, data) << std::endl;
 }
 
 void print_map() {
-    std::map<int, int> map = {{1, 2}, {2, 3}, {3, 4}};
-    pretty::print(std::cout, map) << std::endl;
+    std::map<int, int> data = {{1, 2}, {2, 3}, {3, 4}};
+    pretty::print(std::cout, data) << std::endl;
 }
 
 void print_pair() {
     using namespace std::string_literals;
-    auto pair = std::make_pair("123"s, 12);
-    pretty::print(std::cout, pair) << std::endl;
+    auto data = std::make_pair("123"s, 12);
+    pretty::print(std::cout, data) << std::endl;
 }
 
 void print_optional() {
     using namespace std::string_literals;
-    std::optional<std::string> opt{"string"s};
-    pretty::print(std::cout, opt) << std::endl;
+    std::optional<std::string> data{"string"s};
+    pretty::print(std::cout, data) << std::endl;
 }
 
 void print_variant() {
-    std::variant<int, std::string> variant;
-    variant = "123";
-    pretty::print(std::cout, variant) << std::endl;
+    std::variant<int, std::string> data;
+    data = "123";
+    pretty::print(std::cout, data) << std::endl;
 }
 
 void print_tuple() {
-    auto tuple = std::make_tuple("1", 2, 3, 4.5);
-    pretty::print(std::cout, tuple) << std::endl;
+    auto data = std::make_tuple("1", 2, 3, 4.5);
+    pretty::print(std::cout, data) << std::endl;
 }
 
 void print_c_array() {
-    int c_arr[] = {1, 2, 3, 4, 5, 6};
-    pretty::print(std::cout, c_arr) << std::endl;
+    int data[] = {1, 2, 3, 4, 5, 6};
+    pretty::print(std::cout, data) << std::endl;
     pretty::print(std::cout, "hello") << std::endl;
 }
 
 void print_hardcore() {
     using namespace std::string_literals;
-    std::unordered_map<std::string, std::map<std::string, std::optional<int>>> mapmap = {
+    std::unordered_map<std::string, std::map<std::string, std::optional<int>>> data = {
         {"test"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, 4}}},
         {"hello"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, 4}}},
         {"world"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, {}}}}};
-    pretty::print(std::cout, mapmap) << std::endl;
+    pretty::print(std::cout, data) << std::endl;
 }
 
+void print_user_data() { 
+	user_data data;
+    pretty::print(std::cout, data) << std::endl;
+}
 
-#include <complex>
 int main() {
     print_vector();
     print_map();
@@ -78,6 +92,6 @@ int main() {
     print_tuple();
     print_c_array();
     print_hardcore();
-
+    print_user_data();
     return 0;
 }

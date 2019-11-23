@@ -1,7 +1,7 @@
 #pragma once
 #include <iomanip>  // std::quoted
 #include <type_traits>
-#include <utility>  // std::pair
+#include <utility>  // std::pair, std::tuple
 
 #if __has_include(<variant>)
 #include <variant>
@@ -91,8 +91,7 @@ namespace pretty::detail {
         return std::forward<T>(v);
     }
 
-
-    struct ostream {
+    struct ostream {  // struct ostream
         template <size_t Nested, class Stream, class T>
         static Stream& ostream_impl(Stream& out, const T& data);
         template <size_t Nested, class Stream, typename T, typename V,
@@ -110,29 +109,18 @@ namespace pretty::detail {
 #if __has_include(<variant>)
         static Stream& ostream_impl(Stream& out, const std::variant<T, Ts...>& data);
 #endif
-    };
+    };  // struct ostream
 
-    template <std::size_t Nested, std::size_t I, std::size_t N>
-    struct print_tuple_impl {
-        template <class Stream, class T>
-        static void print(Stream& out, const T& value) {
-            if (!!I) out << ", ";
-            ostream::ostream_impl<Nested>(out, std::get<I>(value));
-            print_tuple_impl<Nested, I + 1, N>::print(out, value);
-        }
-    };
-
-    template <std::size_t Nested, std::size_t I>
-    struct print_tuple_impl<Nested, I, I> {
-        template <class Stream, class T>
-        static void print(Stream&, const T&) noexcept {}
-    };
+    template <size_t Nested, class Stream, class Tuple, std::size_t... Is>
+    void print_tuple_impl(Stream& out, const Tuple& value, std::index_sequence<Is...>) {
+		((void)(out << (Is == 0 ? "" : ", "), (void)ostream::ostream_impl<Nested>(out, std::get<Is>(value))), ...);
+    }
 
     template <size_t Nested, class Stream, class T>
     Stream& ostream::ostream_impl(Stream& out, const T& data) {
         if constexpr (detail::is_iterable_v<T> && !detail::has_ostream_operator_v<Stream, T>) {
             std::string delimiter;
-            if (is_map_v<T>) {
+            if constexpr (is_map_v<T>) {
                 out << '{';
             } else {
                 out << '[';
@@ -142,7 +130,7 @@ namespace pretty::detail {
                 ostream_impl<Nested + 1>(out, detail::quoted_helper(el));
                 delimiter = ", ";
             }
-            if (is_map_v<T>) {
+            if constexpr (is_map_v<T>) {
                 out << '}';
             } else {
                 out << ']';
@@ -175,7 +163,7 @@ namespace pretty::detail {
     template <size_t Nested, class Stream, typename... Args, typename>
     Stream& ostream::ostream_impl(Stream& out, const std::tuple<Args...>& data) {
         out << "(";
-        detail::print_tuple_impl<Nested, 0, std::tuple_size_v<std::tuple<Args...>>>::print(out, data);
+        detail::print_tuple_impl<Nested>(out, data, std::index_sequence_for<Args...>{});
         out << ")";
         return out;
     }
