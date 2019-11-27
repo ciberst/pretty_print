@@ -78,8 +78,8 @@ void print_hardcore() {
     pretty::print(std::cout, data) << std::endl;
 }
 
-void print_user_data() { 
-	user_data data;
+void print_user_data() {
+    user_data data;
     pretty::print(std::cout, data) << std::endl;
 }
 
