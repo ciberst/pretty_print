@@ -143,8 +143,10 @@ namespace pretty::detail {
         } else if constexpr (detail::has_ostream_operator_v<Stream, T>) {
             out << detail::quoted_helper(data);
             return out;
+        } else if constexpr (std::is_enum_v<T>) {
+            out << static_cast<std::underlying_type_t<T>>(data);
         } else {
-            static_assert(detail::has_ostream_operator_v<Stream, T>,
+            static_assert(detail::has_ostream_operator_v<Stream, T> && !std::is_enum_v<T>,
                           "not support [ostream& operator<<(ostream& out, const T& data)]");
         }
 

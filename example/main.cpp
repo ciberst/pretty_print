@@ -1,4 +1,5 @@
 #include <any>
+#include <filesystem>
 #include <forward_list>
 #include <iostream>
 #include <map>
@@ -13,6 +14,24 @@ struct user_data {
     int a = 42;
     std::string str = "hello";
 };
+
+enum class size { large, small, medium };
+
+std::ostream& operator<<(std::ostream& out, size val) {
+    switch (val) {
+        case size::large:
+            out << "large";
+            break;
+        case size::medium:
+            out << "medium";
+            break;
+        case size::small:
+            out << "small";
+            break;
+    }
+    return out;
+}
+
 
 template <class T>
 T& operator,(T& val, const user_data empty) {
@@ -53,7 +72,7 @@ void print_optional() {
 }
 
 void print_variant() {
-    std::variant<int, std::string> data;
+    std::variant<int, std::string, int*> data;
     data = "123";
     pretty::print(std::cout, data) << std::endl;
 }
@@ -78,10 +97,25 @@ void print_hardcore() {
     pretty::print(std::cout, data) << std::endl;
 }
 
-void print_user_data() { 
-	user_data data;
+void print_user_data() {
+    user_data data;
     pretty::print(std::cout, data) << std::endl;
 }
+
+void print_filesystem_path() {
+    std::filesystem::path data{"/home/user/data"};
+    pretty::print(std::cout, data) << std::endl;
+}
+
+void print_enum() {
+    enum class color { red, green, blue };
+    color data = color::green;
+    pretty::print(std::cout, data) << std::endl;
+
+    size data2 = size::large;
+    pretty::print(std::cout, data2) << std::endl;
+}
+
 
 int main() {
     print_vector();
@@ -93,5 +127,7 @@ int main() {
     print_c_array();
     print_hardcore();
     print_user_data();
+    print_filesystem_path();
+    print_enum();
     return 0;
 }
