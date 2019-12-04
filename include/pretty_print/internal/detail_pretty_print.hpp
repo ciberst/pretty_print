@@ -117,13 +117,13 @@ namespace pretty::detail {
         template <std::size_t Nested, class Stream, typename... Args,
                   typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::tuple<Args...>>>>
         static Stream& ostream_impl(Stream& out, const std::tuple<Args...>& data);
+#if __has_include(<optional>)
         template <std::size_t Nested, class Stream, typename T,
                   typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::optional<T>>>>
-#if __has_include(<optional>)
         static Stream& ostream_impl(Stream& out, const std::optional<T>& data);
 #endif
-        template <std::size_t Nested, class Stream, typename T, typename... Ts>
 #if __has_include(<variant>)
+        template <std::size_t Nested, class Stream, typename T, typename... Ts>
         static Stream& ostream_impl(Stream& out, const std::variant<T, Ts...>& data);
 #endif
     };  // struct ostream
@@ -136,7 +136,7 @@ namespace pretty::detail {
     template <std::size_t Nested, class Stream, class T>
     Stream& ostream::ostream_impl(Stream& out, const T& data) {
         if constexpr (detail::is_iterable_v<T> && !detail::is_c_string_v<T> &&
-                      (!detail::has_ostream_operator_v<Stream, T> || std::is_array_v<T>)) {
+                      ((!detail::has_ostream_operator_v<Stream, T>) || std::is_array_v<T>)) {
             std::string delimiter;
             if constexpr (is_map_v<T>) {
                 out << '{';
@@ -149,7 +149,6 @@ namespace pretty::detail {
                 ostream_impl<Nested + 1>(out, detail::quoted_helper(el));
                 delimiter = ", ";
             }
-
 
             if constexpr (is_map_v<T>) {
                 out << '}';

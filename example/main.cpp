@@ -10,12 +10,14 @@
 #include <variant>
 #include <vector>
 
-struct user_data {
+struct user_data { 
     int a = 42;
     std::string str = "hello";
 };
 
 enum class size { large, small, medium };
+
+
 
 std::ostream& operator<<(std::ostream& out, size val) {
     switch (val) {
@@ -84,7 +86,7 @@ void print_tuple() {
 
 void print_c_array() {
     int data[] = {1, 2, 3, 4, 5, 6};
-    int data2[2][2][2] = {1,2,3,4,5,6,7,8};
+    int data2[2][2][2] = {{{1, 2}, {3, 4}}, {{5, 6}, {7, 8}}};
     pretty::print(std::cout, data) << std::endl;
     pretty::print(std::cout, "hello") << std::endl;
     pretty::print(std::cout, data2) << std::endl;
@@ -131,5 +133,6 @@ int main() {
     print_user_data();
     print_filesystem_path();
     print_enum();
+    
     return 0;
 }
