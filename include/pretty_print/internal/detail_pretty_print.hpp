@@ -107,9 +107,15 @@ namespace pretty::detail {
 #endif
     };  // struct ostream
 
+    template <typename Stream, typename T>
+    void append(Stream& out, T&& data) {
+        out << std::forward<T>(data);
+    }
+
     template <std::size_t Nested, class Stream, class Tuple, std::size_t... Is>
     void print_tuple_impl(Stream& out, const Tuple& value, std::index_sequence<Is...>) {
-        ((void)(out << (Is == 0 ? "" : ", "), (void)ostream::ostream_impl<Nested>(out, std::get<Is>(value))), ...);
+        ((void)(append(out, (Is == 0 ? "" : ", ")), (void)ostream::ostream_impl<Nested>(out, std::get<Is>(value))),
+         ...);
     }
 
     template <std::size_t Nested, class Stream, class T>
@@ -118,27 +124,26 @@ namespace pretty::detail {
                       ((!detail::has_ostream_operator_v<Stream, T>) || std::is_array_v<T>)) {
             std::string delimiter;
             if constexpr (is_map_v<T>) {
-                out << '{';
+                append(out, '{');
             } else {
-                out << '[';
+                append(out, '[');
             }
 
             for (const auto& el : data) {
-                out << delimiter;
+                append(out, delimiter);
                 ostream_impl<Nested + 1>(out, detail::quoted_helper(el));
                 delimiter = ", ";
             }
 
             if constexpr (is_map_v<T>) {
-                out << '}';
+                append(out, '}');
             } else {
-                out << ']';
+                append(out, ']');
             }
         } else if constexpr (detail::has_ostream_operator_v<Stream, T>) {
-            out << detail::quoted_helper(data);
-            return out;
+            append(out, detail::quoted_helper(data));
         } else if constexpr (std::is_enum_v<T>) {
-            out << static_cast<std::underlying_type_t<T>>(data);
+            append(out, static_cast<std::underlying_type_t<T>>(data));
         } else {
             static_assert(detail::has_ostream_operator_v<Stream, T> && !std::is_enum_v<T>,
                           "not support [ostream& operator<<(ostream& out, const T& data)]");
@@ -149,12 +154,12 @@ namespace pretty::detail {
 
     template <std::size_t Nested, class Stream, typename T, typename V, typename>
     Stream& ostream::ostream_impl(Stream& out, const std::pair<T, V>& data) {
-        if constexpr (detail::has_ostream_operator_v<Stream, std::pair<T, V>>)
-            out << data;
-        else {
+        if constexpr (detail::has_ostream_operator_v<Stream, std::pair<T, V>>) {
+            append(out, data);
+        } else {
             ///*if (!!Nested) */ out << '{';
             ostream_impl<Nested + 1>(out, detail::quoted_helper(data.first));
-            out << ": ";
+            append(out, ": ");
             ostream_impl<Nested + 1>(out, detail::quoted_helper(data.second));
             ///*if (!!Nested)*/ out << '}';
         }
@@ -163,9 +168,9 @@ namespace pretty::detail {
 
     template <std::size_t Nested, class Stream, typename... Args, typename>
     Stream& ostream::ostream_impl(Stream& out, const std::tuple<Args...>& data) {
-        out << "(";
+        append(out, "(");
         detail::print_tuple_impl<Nested>(out, data, std::index_sequence_for<Args...>{});
-        out << ")";
+        append(out, ")");
         return out;
     }
 
@@ -175,7 +180,7 @@ namespace pretty::detail {
         if (data) {
             ostream_impl<Nested>(out, detail::quoted_helper(data.value()));
         } else {
-            out << "null";
+            append(out, "null");
         }
         return out;
     }
@@ -188,13 +193,13 @@ namespace pretty::detail {
             std::visit([&out](const auto& t) { ostream_impl<Nested>(out, t); }, data);
             return out;
         }
-        out << "VARIANT_NPOS";
+        append(out, "VARIANT_NPOS");
         return out;
     }
 #endif
 
 
-	/// static assert test 
+    /// static assert test
     static_assert(is_same_any_of_v<char, int, char, double>, "test failed");
 
 #if __has_include(<variant>)
