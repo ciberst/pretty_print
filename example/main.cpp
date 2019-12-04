@@ -10,13 +10,12 @@
 #include <variant>
 #include <vector>
 
-struct user_data { 
+struct user_data {
     int a = 42;
     std::string str = "hello";
 };
 
 enum class size { large, small, medium };
-
 
 
 std::ostream& operator<<(std::ostream& out, size val) {
@@ -133,6 +132,6 @@ int main() {
     print_user_data();
     print_filesystem_path();
     print_enum();
-    
+
     return 0;
 }

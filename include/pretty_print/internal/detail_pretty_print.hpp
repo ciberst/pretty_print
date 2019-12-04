@@ -26,12 +26,6 @@ namespace pretty::detail {
     template <typename T>
     inline constexpr bool is_iterable_v = is_iterable<T>::value || std::is_array_v<T>;
 
-
-#if __has_include(<variant>)
-    static_assert(!is_iterable_v<std::variant<int, int>>, "test failed");
-#endif
-    static_assert(is_iterable_v<std::string>, "test failed");
-
     template <typename Stream, typename, typename = void>
     struct has_ostream_operator : std::false_type {};
     template <typename Stream, typename T>
@@ -41,9 +35,6 @@ namespace pretty::detail {
     template <typename Stream, typename T>
     inline constexpr bool has_ostream_operator_v = has_ostream_operator<Stream, T>::value;
 
-    static_assert(!has_ostream_operator_v<std::ostream, std::pair<int, int>>, "test failed");
-    static_assert(has_ostream_operator_v<std::ostream, std::string>, "test failed");
-
     template <typename T, typename T1, typename... Args>
     struct is_same_any_of {
         static constexpr bool value = std::is_same_v<T, T1> || (std::is_same_v<T, Args> || ...);
@@ -51,7 +42,6 @@ namespace pretty::detail {
     template <typename T, typename T1, typename... Args>
     inline constexpr bool is_same_any_of_v = is_same_any_of<T, T1, Args...>::value;
 
-    static_assert(is_same_any_of_v<char, int, char, double>, "test failed");
 
     template <typename T>
     inline constexpr bool is_char_type_v =
@@ -66,17 +56,6 @@ namespace pretty::detail {
 
     template <typename T>
     inline constexpr bool is_c_string_v = is_c_string<T>::value;
-
-    static_assert(is_char_type_v<char>, "test failed");
-    static_assert(is_char_type_v<signed char>, "test failed");
-    static_assert(is_char_type_v<char>, "test failed");
-    static_assert(is_char_type_v<char16_t>, "test failed");
-    static_assert(is_char_type_v<char>, "test failed");
-    static_assert(is_char_type_v<char32_t>, "test failed");
-    static_assert(is_char_type_v<wchar_t>, "test failed");
-    static_assert(!is_char_type_v<uint16_t>, "test failed");
-    static_assert(!is_char_type_v<uint32_t>, "test failed");
-
 
     template <typename T, typename = void>
     struct is_map : std::false_type {};
@@ -213,5 +192,27 @@ namespace pretty::detail {
         return out;
     }
 #endif
+
+
+	/// static assert test 
+    static_assert(is_same_any_of_v<char, int, char, double>, "test failed");
+
+#if __has_include(<variant>)
+    static_assert(!is_iterable_v<std::variant<int, int>>, "test failed");
+#endif
+    static_assert(is_iterable_v<std::string>, "test failed");
+
+    static_assert(!has_ostream_operator_v<std::ostream, std::pair<int, int>>, "test failed");
+    static_assert(has_ostream_operator_v<std::ostream, std::string>, "test failed");
+
+    static_assert(is_char_type_v<char>, "test failed");
+    static_assert(is_char_type_v<signed char>, "test failed");
+    static_assert(is_char_type_v<char>, "test failed");
+    static_assert(is_char_type_v<char16_t>, "test failed");
+    static_assert(is_char_type_v<char>, "test failed");
+    static_assert(is_char_type_v<char32_t>, "test failed");
+    static_assert(is_char_type_v<wchar_t>, "test failed");
+    static_assert(!is_char_type_v<uint16_t>, "test failed");
+    static_assert(!is_char_type_v<uint32_t>, "test failed");
 
 }  // namespace pretty::detail
