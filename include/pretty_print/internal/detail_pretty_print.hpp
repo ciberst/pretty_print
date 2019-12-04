@@ -22,8 +22,10 @@ namespace pretty::detail {
     template <typename T>
     struct is_iterable<T, std::void_t<decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>>
         : std::true_type {};
+
     template <typename T>
-    inline constexpr bool is_iterable_v = is_iterable<T>::value;
+    inline constexpr bool is_iterable_v = is_iterable<T>::value || std::is_array_v<T>;
+
 
 #if __has_include(<variant>)
     static_assert(!is_iterable_v<std::variant<int, int>>, "test failed");
@@ -54,6 +56,16 @@ namespace pretty::detail {
     template <typename T>
     inline constexpr bool is_char_type_v =
         is_same_any_of_v<T, unsigned char, signed char, char, char16_t, char32_t, wchar_t>;
+
+    template <typename T, typename = void>
+    struct is_c_string : std::false_type {};
+    template <typename T>
+    struct is_c_string<T[]> : std::conditional_t<is_char_type_v<T>, std::true_type, std::false_type> {};
+    template <typename T, size_t N>
+    struct is_c_string<T[N]> : std::conditional_t<is_char_type_v<T>, std::true_type, std::false_type> {};
+
+    template <typename T>
+    inline constexpr bool is_c_string_v = is_c_string<T>::value;
 
     static_assert(is_char_type_v<char>, "test failed");
     static_assert(is_char_type_v<signed char>, "test failed");
@@ -123,18 +135,22 @@ namespace pretty::detail {
 
     template <std::size_t Nested, class Stream, class T>
     Stream& ostream::ostream_impl(Stream& out, const T& data) {
-        if constexpr (detail::is_iterable_v<T> && !detail::has_ostream_operator_v<Stream, T>) {
+        if constexpr (detail::is_iterable_v<T> && !detail::is_c_string_v<T> &&
+                      (!detail::has_ostream_operator_v<Stream, T> || std::is_array_v<T>)) {
             std::string delimiter;
             if constexpr (is_map_v<T>) {
                 out << '{';
             } else {
                 out << '[';
             }
+
             for (const auto& el : data) {
                 out << delimiter;
                 ostream_impl<Nested + 1>(out, detail::quoted_helper(el));
                 delimiter = ", ";
             }
+
+
             if constexpr (is_map_v<T>) {
                 out << '}';
             } else {
@@ -198,18 +214,5 @@ namespace pretty::detail {
         return out;
     }
 #endif
-
-    template <class Stream, typename T, std::size_t N>
-    Stream& print_array(Stream& out, const T (&data)[N]) {
-        std::string delimiter;
-        out << '[';
-        for (const auto& el : data) {
-            out << delimiter;
-            ostream::ostream_impl<0>(out, detail::quoted_helper(el));
-            delimiter = ", ";
-        }
-        out << ']';
-        return out;
-    }
 
 }  // namespace pretty::detail
