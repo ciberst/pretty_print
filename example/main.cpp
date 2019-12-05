@@ -120,6 +120,8 @@ void print_enum() {
 }
 
 
+extern void run_test();
+
 int main() {
     print_vector();
     print_map();
@@ -132,6 +134,6 @@ int main() {
     print_user_data();
     print_filesystem_path();
     print_enum();
-
+    run_test();
     return 0;
 }
