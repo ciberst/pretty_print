@@ -1,5 +1,7 @@
 #include <cassert>
+#if __has_include(<filesystem>)
 #include <filesystem>
+#endif
 #include <iostream>
 #include <map>
 #include <pretty_print/pretty_print.hpp>
@@ -47,12 +49,12 @@ namespace pretty_test {
 
 
     template <class T>
-    T& operator,(T& val, const user_data empty) {
+    T& operator,(T& val, const user_data& empty) {
         (void)empty;
         return val;
     }
     template <class T>
-    const T& operator,(const T& val, const user_data empty) {
+    const T& operator,(const T& val, const user_data& empty) {
         (void)empty;
         return val;
     }
@@ -131,7 +133,7 @@ namespace pretty_test {
     }
 
     void test_hardcore() {
-        std::unordered_map<std::string, std::map<std::string, std::optional<int>>> data = {
+        std::map<std::string, std::map<std::string, std::optional<int>>> data = {
             {"test"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, 4}}},
             {"hello"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, 4}}},
             {"world"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, {}}}}};
@@ -139,10 +141,10 @@ namespace pretty_test {
 
         pretty::print(ss, data);
         ASSERT_EQUAL(
-            R"({"hello": {"1": 2, "2": 3, "3": 4}, "world": {"1": 2, "2": 3, "3": null}, "test": {"1": 2, "2": 3, "3": 4}})"s,
+            R"({"hello": {"1": 2, "2": 3, "3": 4}, "test": {"1": 2, "2": 3, "3": 4}, "world": {"1": 2, "2": 3, "3": null}})"s,
             ss.str());
         ASSERT_EQUAL(
-            R"({"hello": {"1": 2, "2": 3, "3": 4}, "world": {"1": 2, "2": 3, "3": null}, "test": {"1": 2, "2": 3, "3": 4}})"s,
+            R"({"hello": {"1": 2, "2": 3, "3": 4}, "test": {"1": 2, "2": 3, "3": 4}, "world": {"1": 2, "2": 3, "3": null}})"s,
             pretty::print(data));
     }
 
@@ -155,6 +157,7 @@ namespace pretty_test {
         ASSERT_EQUAL(R"(hello, 42)"s, pretty::print(data));
     }
 
+#if __has_include(<filesystem>)
     void test_filesystem_path() {
         std::filesystem::path data{"/home/user/data"};
         std::stringstream ss;
@@ -163,7 +166,7 @@ namespace pretty_test {
         ASSERT_EQUAL(R"("/home/user/data")"s, ss.str());
         ASSERT_EQUAL(R"("/home/user/data")"s, pretty::print(data));
     }
-
+#endif
     void test_enum() {
         enum class color { red, green, blue };
         color data = color::green;
@@ -192,6 +195,8 @@ void run_test() {
     test_c_array();
     test_hardcore();
     test_user_data();
+#if __has_include(<filesystem>)
     test_filesystem_path();
+#endif
     test_enum();
 }

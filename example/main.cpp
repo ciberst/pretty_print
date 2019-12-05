@@ -1,5 +1,7 @@
 #include <any>
+#if __has_include(<filesystem>)
 #include <filesystem>
+#endif
 #include <forward_list>
 #include <iostream>
 #include <map>
@@ -35,12 +37,12 @@ std::ostream& operator<<(std::ostream& out, size val) {
 
 
 template <class T>
-T& operator,(T& val, const user_data empty) {
+T& operator,(T& val, const user_data& empty) {
     (void)empty;
     return val;
 }
 template <class T>
-const T& operator,(const T& val, const user_data empty) {
+const T& operator,(const T& val, const user_data& empty) {
     (void)empty;
     return val;
 }
@@ -105,10 +107,12 @@ void print_user_data() {
     pretty::print(std::cout, data) << std::endl;
 }
 
+#if __has_include(<filesystem>)
 void print_filesystem_path() {
     std::filesystem::path data{"/home/user/data"};
     pretty::print(std::cout, data) << std::endl;
 }
+#endif
 
 void print_enum() {
     enum class color { red, green, blue };
@@ -132,7 +136,9 @@ int main() {
     print_c_array();
     print_hardcore();
     print_user_data();
+#if __has_include(<filesystem>)
     print_filesystem_path();
+#endif
     print_enum();
     run_test();
     return 0;
