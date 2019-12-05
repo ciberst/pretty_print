@@ -67,6 +67,7 @@ namespace pretty_test {
         std::stringstream ss;
         pretty::print(ss, data);
         ASSERT_EQUAL("[1, 2, 3, 4]"s, ss.str());
+        ASSERT_EQUAL("[1, 2, 3, 4]"s, pretty::print(data));
     }
 
     void test_map() {
@@ -74,22 +75,23 @@ namespace pretty_test {
         std::stringstream ss;
         pretty::print(ss, data);
         ASSERT_EQUAL("{1: 2, 2: 3, 3: 4}"s, ss.str());
+        ASSERT_EQUAL("{1: 2, 2: 3, 3: 4}"s, pretty::print(data));
     }
 
     void test_pair() {
-        using namespace std::string_literals;
         auto data = std::make_pair("123"s, 12);
         std::stringstream ss;
         pretty::print(ss, data);
         ASSERT_EQUAL(R"("123": 12)"s, ss.str());
+        ASSERT_EQUAL(R"("123": 12)"s, pretty::print(data));
     }
 
     void test_optional() {
-        using namespace std::string_literals;
         std::optional<std::string> data{"string"s};
         std::stringstream ss;
         pretty::print(ss, data);
         ASSERT_EQUAL(R"("string")"s, ss.str());
+        ASSERT_EQUAL(R"("string")"s, pretty::print(data));
     }
 
     void test_variant() {
@@ -98,6 +100,7 @@ namespace pretty_test {
         std::stringstream ss;
         pretty::print(ss, data);
         ASSERT_EQUAL(R"("123")"s, ss.str());
+        ASSERT_EQUAL(R"("123")"s, pretty::print(data));
     }
 
     void test_tuple() {
@@ -106,6 +109,7 @@ namespace pretty_test {
 
         pretty::print(ss, data);
         ASSERT_EQUAL(R"data(("1", 2, 3, 4.5))data"s, ss.str());
+        ASSERT_EQUAL(R"data(("1", 2, 3, 4.5))data"s, pretty::print(data));
     }
 
     void test_c_array() {
@@ -115,17 +119,18 @@ namespace pretty_test {
 
         pretty::print(ss, data);
         ASSERT_EQUAL(R"([1, 2, 3, 4, 5, 6])"s, ss.str());
+        ASSERT_EQUAL(R"([1, 2, 3, 4, 5, 6])"s, pretty::print(data));
         ss = std::stringstream();
         pretty::print(ss, "hello");
         ASSERT_EQUAL(R"("hello")"s, ss.str());
+        ASSERT_EQUAL(R"("hello")"s, pretty::print("hello"));
         ss = std::stringstream();
         pretty::print(ss, data2);
         ASSERT_EQUAL(R"([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])"s, ss.str());
-        ss = std::stringstream();
+        ASSERT_EQUAL(R"([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])"s, pretty::print(data2));
     }
 
     void test_hardcore() {
-        using namespace std::string_literals;
         std::unordered_map<std::string, std::map<std::string, std::optional<int>>> data = {
             {"test"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, 4}}},
             {"hello"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, 4}}},
@@ -136,6 +141,9 @@ namespace pretty_test {
         ASSERT_EQUAL(
             R"({"hello": {"1": 2, "2": 3, "3": 4}, "world": {"1": 2, "2": 3, "3": null}, "test": {"1": 2, "2": 3, "3": 4}})"s,
             ss.str());
+        ASSERT_EQUAL(
+            R"({"hello": {"1": 2, "2": 3, "3": 4}, "world": {"1": 2, "2": 3, "3": null}, "test": {"1": 2, "2": 3, "3": 4}})"s,
+            pretty::print(data));
     }
 
     void test_user_data() {
@@ -144,6 +152,7 @@ namespace pretty_test {
 
         pretty::print(ss, data);
         ASSERT_EQUAL(R"(hello, 42)"s, ss.str());
+        ASSERT_EQUAL(R"(hello, 42)"s, pretty::print(data));
     }
 
     void test_filesystem_path() {
@@ -152,6 +161,7 @@ namespace pretty_test {
 
         pretty::print(ss, data);
         ASSERT_EQUAL(R"("/home/user/data")"s, ss.str());
+        ASSERT_EQUAL(R"("/home/user/data")"s, pretty::print(data));
     }
 
     void test_enum() {
@@ -161,10 +171,12 @@ namespace pretty_test {
 
         pretty::print(ss, data);
         ASSERT_EQUAL(R"(1)"s, ss.str());
+        ASSERT_EQUAL(R"(1)"s, pretty::print(data));
         ss = std::stringstream();
         size data2 = size::large;
         pretty::print(ss, data2);
         ASSERT_EQUAL(R"(large)"s, ss.str());
+        ASSERT_EQUAL(R"(large)"s, pretty::print(data2));
     }
 }  // namespace pretty_test
 
