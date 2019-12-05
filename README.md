@@ -95,13 +95,28 @@ Output
 ### C-array and C-string
 ```cpp
 int c_arr[] = {1, 2, 3, 4, 5, 6};
+int data2[2][2][2] = {{{1, 2}, {3, 4}}, {{5, 6}, {7, 8}}};
 pretty::print(std::cout, c_arr) << std::endl;
 pretty::print(std::cout, "hello") << std::endl;
+pretty::print(std::cout, data2) << std::endl;
 ```
 Output
 ```
 [1, 2, 3, 4, 5, 6]
 "hello"
+[[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+```
+
+### Enum
+
+```cpp
+enum class color { red, green, blue };
+color data = color::green;
+pretty::print(std::cout, data) << std::endl;
+```
+Output
+```
+1
 ```
 
 ### hardcore example :-)

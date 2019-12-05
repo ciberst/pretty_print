@@ -5,3 +5,5 @@ TabWidth: '4'
 AccessModifierOffset: '-4'
 NamespaceIndentation: All
 MaxEmptyLinesToKeep: '2'
+UseTab: Never
+

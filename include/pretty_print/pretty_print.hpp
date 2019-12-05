@@ -1,25 +1,12 @@
 #pragma once
-#include <sstream>  // std::stringstream
-#include <string_view>
+#include <sstream>      // std::stringstream
+#include <string>       // std::string
 #include <type_traits>  // std::is_same_v
-#include <typeinfo>
+#include <typeinfo>     // std::type_info::name
 
 #include "internal/detail_pretty_print.hpp"
 
 namespace pretty {
-
-    /** pretty C-array print
-     * @param out Stream
-     * @param data C-array
-     * @return Stream */
-    template <class Stream, typename T, size_t N>
-    constexpr Stream& print(Stream& out, const T (&data)[N]) {
-        if constexpr (!(detail::is_char_type_v<T>))
-            detail::print_array(out, data);
-        else
-            detail::ostream::ostream_impl<0>(out, data);
-        return out;
-    }
 
     /** pretty data print
      * @param out Stream
@@ -39,17 +26,6 @@ namespace pretty {
         std::stringstream out;
         print(out, data);
         return out.str();
-    }
-
-    /** pretty C-array print with type inforamation at the beginning
-     * @param out Stream
-     * @param data C-array
-     * @return Stream */
-    template <class Stream, typename T, size_t N>
-    constexpr Stream& print_ti(Stream& out, const T (&data)[N]) {
-        out << typeid(T).name() << "[" << N << "]@";
-        print(out, data);
-        return out;
     }
 
     /** pretty data print with type inforamation at the beginning

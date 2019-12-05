@@ -1,23 +1,30 @@
 #pragma once
-#include <iomanip>  // std::quoted
-#include <optional>
-#include <type_traits>
-#include <utility>
-#include <variant>
+#include <cstddef>      // std::size_t
+#include <iomanip>      // std::quoted
+#include <string>       // std::string
+#include <tuple>        // std::tuple
+#include <type_traits>  // std::declval, std::void_t,
+                        // std::false_type, std::true_type
+#include <utility>      // std::pair, std::tuple
+                        // std::forward
+
+#if __has_include(<variant>)
+#include <variant>  // std::variant
+#endif
+#if __has_include(<optional>)
+#include <optional>  // std::optional
+#endif
 
 namespace pretty::detail {
-
 
     template <typename T, typename = void>
     struct is_iterable : std::false_type {};
     template <typename T>
     struct is_iterable<T, std::void_t<decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>>
         : std::true_type {};
-    template <typename T>
-    inline constexpr bool is_iterable_v = is_iterable<T>::value;
 
-    static_assert(!is_iterable_v<std::variant<int, int>>, "test failed");
-    static_assert(is_iterable_v<std::string>, "test failed");
+    template <typename T>
+    inline constexpr bool is_iterable_v = is_iterable<T>::value || std::is_array_v<T>;
 
     template <typename Stream, typename, typename = void>
     struct has_ostream_operator : std::false_type {};
@@ -28,9 +35,6 @@ namespace pretty::detail {
     template <typename Stream, typename T>
     inline constexpr bool has_ostream_operator_v = has_ostream_operator<Stream, T>::value;
 
-    static_assert(!has_ostream_operator_v<std::ostream, std::pair<int, int>>, "test failed");
-    static_assert(has_ostream_operator_v<std::ostream, std::string>, "test failed");
-
     template <typename T, typename T1, typename... Args>
     struct is_same_any_of {
         static constexpr bool value = std::is_same_v<T, T1> || (std::is_same_v<T, Args> || ...);
@@ -38,22 +42,20 @@ namespace pretty::detail {
     template <typename T, typename T1, typename... Args>
     inline constexpr bool is_same_any_of_v = is_same_any_of<T, T1, Args...>::value;
 
-    static_assert(is_same_any_of_v<char, int, char, double>, "test failed");
 
     template <typename T>
     inline constexpr bool is_char_type_v =
         is_same_any_of_v<T, unsigned char, signed char, char, char16_t, char32_t, wchar_t>;
 
-    static_assert(is_char_type_v<char>, "test failed");
-    static_assert(is_char_type_v<signed char>, "test failed");
-    static_assert(is_char_type_v<char>, "test failed");
-    static_assert(is_char_type_v<char16_t>, "test failed");
-    static_assert(is_char_type_v<char>, "test failed");
-    static_assert(is_char_type_v<char32_t>, "test failed");
-    static_assert(is_char_type_v<wchar_t>, "test failed");
-    static_assert(!is_char_type_v<uint16_t>, "test failed");
-    static_assert(!is_char_type_v<uint32_t>, "test failed");
+    template <typename T, typename = void>
+    struct is_c_string : std::false_type {};
+    template <typename T>
+    struct is_c_string<T[]> : std::conditional_t<is_char_type_v<T>, std::true_type, std::false_type> {};
+    template <typename T, size_t N>
+    struct is_c_string<T[N]> : std::conditional_t<is_char_type_v<T>, std::true_type, std::false_type> {};
 
+    template <typename T>
+    inline constexpr bool is_c_string_v = is_c_string<T>::value;
 
     template <typename T, typename = void>
     struct is_map : std::false_type {};
@@ -64,7 +66,7 @@ namespace pretty::detail {
     template <typename T>
     inline constexpr bool is_map_v = is_map<T>::value;
 
-    template <typename T, size_t N, typename = std::enable_if_t<is_char_type_v<T>>>
+    template <typename T, std::size_t N, typename = std::enable_if_t<is_char_type_v<T>>>
     auto quoted_helper(const T (&s)[N]) noexcept {
         return std::quoted(s);
     }
@@ -85,126 +87,137 @@ namespace pretty::detail {
         return std::forward<T>(v);
     }
 
-
-    struct ostream {
-        template <size_t Nested, class Stream, class T>
+    struct ostream {  // struct ostream
+        template <std::size_t Nested, class Stream, class T>
         static Stream& ostream_impl(Stream& out, const T& data);
-        template <size_t Nested, class Stream, typename T, typename V,
+        template <std::size_t Nested, class Stream, typename T, typename V,
                   typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::pair<T, V>>>>
         static Stream& ostream_impl(Stream& out, const std::pair<T, V>& data);
-        template <size_t Nested, class Stream, typename... Args,
+        template <std::size_t Nested, class Stream, typename... Args,
                   typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::tuple<Args...>>>>
         static Stream& ostream_impl(Stream& out, const std::tuple<Args...>& data);
-        template <size_t Nested, class Stream, typename T,
+#if __has_include(<optional>)
+        template <std::size_t Nested, class Stream, typename T,
                   typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::optional<T>>>>
         static Stream& ostream_impl(Stream& out, const std::optional<T>& data);
-        template <size_t Nested, class Stream, typename T, typename... Ts>
+#endif
+#if __has_include(<variant>)
+        template <std::size_t Nested, class Stream, typename T, typename... Ts>
         static Stream& ostream_impl(Stream& out, const std::variant<T, Ts...>& data);
-    };
+#endif
+    };  // struct ostream
 
-    template <std::size_t Nested, std::size_t I, std::size_t N>
-    struct print_tuple_impl {
-        template <class Stream, class T>
-        static void print(Stream& out, const T& value) {
-            if (!!I) out << ", ";
-            ostream::ostream_impl<Nested>(out, std::get<I>(value));
-            // out << detail::quoted_helper(std::get<I>(value));
-            print_tuple_impl<Nested, I + 1, N>::print(out, value);
-        }
-    };
+    template <typename Stream, typename T>
+    void append(Stream& out, T&& data) {
+        out << std::forward<T>(data);
+    }
 
-    template <std::size_t Nested, std::size_t I>
-    struct print_tuple_impl<Nested, I, I> {
-        template <class Stream, class T>
-        static void print(Stream&, const T&) noexcept {}
-    };
+    template <std::size_t Nested, class Stream, class Tuple, std::size_t... Is>
+    void print_tuple_impl(Stream& out, const Tuple& value, std::index_sequence<Is...>) {
+        ((void)(append(out, (Is == 0 ? "" : ", ")), (void)ostream::ostream_impl<Nested>(out, std::get<Is>(value))),
+         ...);
+    }
 
-    // struct ostream {
-    template <size_t Nested, class Stream, class T>
+    template <std::size_t Nested, class Stream, class T>
     Stream& ostream::ostream_impl(Stream& out, const T& data) {
-        if constexpr (detail::is_iterable_v<T> && !detail::has_ostream_operator_v<Stream, T>) {
+        if constexpr (detail::is_iterable_v<T> && !detail::is_c_string_v<T> &&
+                      ((!detail::has_ostream_operator_v<Stream, T>) || std::is_array_v<T>)) {
             std::string delimiter;
-            if (is_map_v<T>) {
-                out << '{';
+            if constexpr (is_map_v<T>) {
+                append(out, '{');
             } else {
-                out << '[';
+                append(out, '[');
             }
+
             for (const auto& el : data) {
-                out << delimiter;
+                append(out, delimiter);
                 ostream_impl<Nested + 1>(out, detail::quoted_helper(el));
                 delimiter = ", ";
             }
-            if (is_map_v<T>) {
-                out << '}';
+
+            if constexpr (is_map_v<T>) {
+                append(out, '}');
             } else {
-                out << ']';
+                append(out, ']');
             }
         } else if constexpr (detail::has_ostream_operator_v<Stream, T>) {
-            out << detail::quoted_helper(data);
-            return out;
+            append(out, detail::quoted_helper(data));
+        } else if constexpr (std::is_enum_v<T>) {
+            append(out, static_cast<std::underlying_type_t<T>>(data));
         } else {
-            static_assert(detail::has_ostream_operator_v<Stream, T>,
+            static_assert(detail::has_ostream_operator_v<Stream, T> && !std::is_enum_v<T>,
                           "not support [ostream& operator<<(ostream& out, const T& data)]");
         }
 
         return out;
     }
 
-    template <size_t Nested, class Stream, typename T, typename V, typename>
+    template <std::size_t Nested, class Stream, typename T, typename V, typename>
     Stream& ostream::ostream_impl(Stream& out, const std::pair<T, V>& data) {
-        if constexpr (detail::has_ostream_operator_v<Stream, std::pair<T, V>>)
-            out << data;
-        else {
+        if constexpr (detail::has_ostream_operator_v<Stream, std::pair<T, V>>) {
+            append(out, data);
+        } else {
             ///*if (!!Nested) */ out << '{';
             ostream_impl<Nested + 1>(out, detail::quoted_helper(data.first));
-            out << ": ";
+            append(out, ": ");
             ostream_impl<Nested + 1>(out, detail::quoted_helper(data.second));
             ///*if (!!Nested)*/ out << '}';
         }
         return out;
     }
 
-    template <size_t Nested, class Stream, typename... Args, typename>
+    template <std::size_t Nested, class Stream, typename... Args, typename>
     Stream& ostream::ostream_impl(Stream& out, const std::tuple<Args...>& data) {
-        out << "(";
-        detail::print_tuple_impl<Nested, 0, std::tuple_size_v<std::tuple<Args...>>>::print(out, data);
-        out << ")";
+        append(out, "(");
+        detail::print_tuple_impl<Nested>(out, data, std::index_sequence_for<Args...>{});
+        append(out, ")");
         return out;
     }
 
-    template <size_t Nested, class Stream, typename T, typename>
+#if __has_include(<optional>)
+    template <std::size_t Nested, class Stream, typename T, typename>
     Stream& ostream::ostream_impl(Stream& out, const std::optional<T>& data) {
         if (data) {
             ostream_impl<Nested>(out, detail::quoted_helper(data.value()));
         } else {
-            out << "null";
+            append(out, "null");
         }
         return out;
     }
+#endif
 
-    template <size_t Nested, class Stream, typename T, typename... Ts>
+#if __has_include(<variant>)
+    template <std::size_t Nested, class Stream, typename T, typename... Ts>
     Stream& ostream::ostream_impl(Stream& out, const std::variant<T, Ts...>& data) {
         if (data.index() != std::variant_npos) {
             std::visit([&out](const auto& t) { ostream_impl<Nested>(out, t); }, data);
             return out;
         }
-        out << "VARIANT_NPOS";
+        append(out, "VARIANT_NPOS");
         return out;
     }
-    //}; struct ostream
+#endif
 
 
-    template <class Stream, typename T, size_t N>
-    Stream& print_array(Stream& out, const T (&data)[N]) {
-        std::string delimiter;
-        out << '[';
-        for (const auto& el : data) {
-            out << delimiter;
-            ostream::ostream_impl<0>(out, detail::quoted_helper(el));
-            delimiter = ", ";
-        }
-        out << ']';
-        return out;
-    }
+    /// static assert test
+    static_assert(is_same_any_of_v<char, int, char, double>, "test failed");
+
+#if __has_include(<variant>)
+    static_assert(!is_iterable_v<std::variant<int, int>>, "test failed");
+#endif
+    static_assert(is_iterable_v<std::string>, "test failed");
+
+    static_assert(!has_ostream_operator_v<std::ostream, std::pair<int, int>>, "test failed");
+    static_assert(has_ostream_operator_v<std::ostream, std::string>, "test failed");
+
+    static_assert(is_char_type_v<char>, "test failed");
+    static_assert(is_char_type_v<signed char>, "test failed");
+    static_assert(is_char_type_v<char>, "test failed");
+    static_assert(is_char_type_v<char16_t>, "test failed");
+    static_assert(is_char_type_v<char>, "test failed");
+    static_assert(is_char_type_v<char32_t>, "test failed");
+    static_assert(is_char_type_v<wchar_t>, "test failed");
+    static_assert(!is_char_type_v<uint16_t>, "test failed");
+    static_assert(!is_char_type_v<uint32_t>, "test failed");
 
 }  // namespace pretty::detail
