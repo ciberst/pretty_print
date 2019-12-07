@@ -18,7 +18,7 @@ void is_equal_assert(const T& lhs, const T& rhs, int line) {
                   << "ASSERT! Line: " << line << std::endl
                   << "Expect: " << lhs << std::endl
                   << "Value : " << rhs << std::endl;
-        assert(false);
+        //assert(false);
     }
 }
 #define ASSERT_EQUAL(x, y) is_equal_assert(x, y, __LINE__)

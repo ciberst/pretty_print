@@ -14,8 +14,32 @@
 #if __has_include(<optional>)
 #include <optional>  // std::optional
 #endif
+namespace pretty {
+    struct options {
+        using indent_size_t = uint8_t;
 
+        /** Enable prettify */
+        bool prettify = false;
+
+        indent_size_t indent_size = 4;
+
+        bool compact_array = false;
+
+        constexpr options() = default;
+    };
+}  // namespace pretty
 namespace pretty::detail {
+
+    enum class new_line : uint8_t {
+        none = 0,
+        after_data = 1 << 0,
+        before_data = 1 << 1,
+    };
+    using new_line_underlying_type_t = std::underlying_type_t<new_line>;
+
+    inline constexpr bool operator&(new_line lhs, new_line rhs) {
+        return !!(static_cast<new_line_underlying_type_t>(lhs) & static_cast<new_line_underlying_type_t>(rhs));
+    }
 
     template <typename T, typename = void>
     struct is_iterable : std::false_type {};
@@ -89,61 +113,140 @@ namespace pretty::detail {
 
     struct ostream {  // struct ostream
         template <std::size_t Nested, class Stream, class T>
-        static Stream& ostream_impl(Stream& out, const T& data);
+        static void print_map(const options& params, Stream& out, const T& data);
+        template <std::size_t Nested, class Stream, class T>
+        static void print_array(const options& params, Stream& out, const T& data);
+        template <std::size_t Nested, class Stream, class T>
+        static Stream& ostream_impl(const options& params, Stream& out, const T& data);
         template <std::size_t Nested, class Stream, typename T, typename V,
                   typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::pair<T, V>>>>
-        static Stream& ostream_impl(Stream& out, const std::pair<T, V>& data);
+        static Stream& ostream_impl(const options& params, Stream& out, const std::pair<T, V>& data);
         template <std::size_t Nested, class Stream, typename... Args,
                   typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::tuple<Args...>>>>
-        static Stream& ostream_impl(Stream& out, const std::tuple<Args...>& data);
+        static Stream& ostream_impl(const options& params, Stream& out, const std::tuple<Args...>& data);
 #if __has_include(<optional>)
         template <std::size_t Nested, class Stream, typename T,
                   typename = std::enable_if_t<!detail::has_ostream_operator_v<Stream, std::optional<T>>>>
-        static Stream& ostream_impl(Stream& out, const std::optional<T>& data);
+        static Stream& ostream_impl(const options& params, Stream& out, const std::optional<T>& data);
 #endif
 #if __has_include(<variant>)
         template <std::size_t Nested, class Stream, typename T, typename... Ts>
-        static Stream& ostream_impl(Stream& out, const std::variant<T, Ts...>& data);
+        static Stream& ostream_impl(const options& params, Stream& out, const std::variant<T, Ts...>& data);
 #endif
     };  // struct ostream
 
-    template <typename Stream, typename T>
-    void append(Stream& out, T&& data) {
-        out << std::forward<T>(data);
+    template <typename Stream>
+    void append_indent(Stream& out, options::indent_size_t indent) {
+        for (options::indent_size_t i = 0; i != indent; ++i) out << ' ';
+    }
+
+    template <std::size_t Nested, new_line AddNewline, typename Stream>
+    void append(const options& params, Stream& out) {
+        if (params.prettify) {
+            if constexpr (!!(AddNewline & new_line::before_data)) out << "\n";
+            for (std::size_t i = 0; i != Nested; ++i) {
+                append_indent(out, params.indent_size);
+            }
+            if constexpr (!!(AddNewline & new_line::after_data)) out << "\n";
+        }
+    }
+
+    template <std::size_t Nested, new_line AddNewline, typename Stream, typename T>
+    void append(const options& params, Stream& out, T&& data) {
+        if (params.prettify) {
+            if constexpr (!!(AddNewline & new_line::before_data)) out << "\n";
+            for (std::size_t i = 0; i != Nested; ++i) {
+                append_indent(out, params.indent_size);
+            }
+            out << std::forward<T>(data);
+            if constexpr (!!(AddNewline & new_line::after_data)) {
+                out << "\n";
+            }
+        } else {
+            out << std::forward<T>(data);
+        }
     }
 
     template <std::size_t Nested, class Stream, class Tuple, std::size_t... Is>
-    void print_tuple_impl(Stream& out, const Tuple& value, std::index_sequence<Is...>) {
-        ((void)(append(out, (Is == 0 ? "" : ", ")), (void)ostream::ostream_impl<Nested>(out, std::get<Is>(value))),
+    void print_tuple_impl(const options& params, Stream& out, const Tuple& value, std::index_sequence<Is...>) {
+        ((void)(append<Nested, new_line::none>(params, out, (Is == 0 ? "" : ", ")),
+                (void)ostream::ostream_impl<Nested>(params, out, std::get<Is>(value))),
          ...);
     }
 
     template <std::size_t Nested, class Stream, class T>
-    Stream& ostream::ostream_impl(Stream& out, const T& data) {
-        if constexpr (detail::is_iterable_v<T> && !detail::is_c_string_v<T> &&
-                      ((!detail::has_ostream_operator_v<Stream, T>) || std::is_array_v<T>)) {
-            std::string delimiter;
-            if constexpr (is_map_v<T>) {
-                append(out, '{');
-            } else {
-                append(out, '[');
+    void ostream::print_map(const options& params, Stream& out, const T& data) {
+        std::string delimiter;
+        append<0, new_line::after_data>(params, out, '{');
+        for (const auto& el : data) {
+            if (!delimiter.empty()) {
+                append<0, new_line::after_data>(params, out, delimiter);
             }
+            append<Nested + 1, new_line::none>(params, out);
 
+            ostream_impl<Nested>(params, out, detail::quoted_helper(el));
+
+            delimiter = ", ";
+        }
+        append<Nested, new_line::before_data>(params, out, '}');
+    }
+
+    template <std::size_t Nested, class Stream, class T>
+    void ostream::print_array(const options& params, Stream& out, const T& data) {
+        std::string delimiter;
+        using under_layer_t = std::remove_reference_t<decltype(*std::begin(data))>;
+        if (params.compact_array) {
+            if (!is_iterable_v<under_layer_t>) {
+                append<0, new_line::none>(params, out, '[');
+            } else {
+                append<0, new_line::after_data>(params, out, '[');
+            }
             for (const auto& el : data) {
-                append(out, delimiter);
-                ostream_impl<Nested + 1>(out, detail::quoted_helper(el));
+                if (!delimiter.empty()) {
+                    if constexpr (is_iterable_v<under_layer_t>) {
+                        append<0, new_line::after_data>(params, out, delimiter);
+                    } else {
+                        append<0, new_line::none>(params, out, delimiter);
+                    }
+                }
+                if constexpr (is_iterable_v<under_layer_t>) {
+                    append<Nested + 1, new_line::none>(params, out);
+                } 
+                ostream_impl<Nested + 1>(params, out, detail::quoted_helper(el));
                 delimiter = ", ";
             }
-
-            if constexpr (is_map_v<T>) {
-                append(out, '}');
+            if (!is_iterable_v<under_layer_t>) {
+                append<0, new_line::none>(params, out, ']');
             } else {
-                append(out, ']');
+                append<Nested, new_line::before_data>(params, out, ']');
+            }
+        } else {
+            append<0, new_line::after_data>(params, out, '[');
+            for (const auto& el : data) {
+                if (!delimiter.empty()) {
+                    append<0, new_line::after_data>(params, out, delimiter);
+                }
+                append<Nested + 1, new_line::none>(params, out);
+                ostream_impl<Nested + 1>(params, out, detail::quoted_helper(el));
+                delimiter = ", ";
+            }
+            append<Nested, new_line::before_data>(params, out, ']');
+        }
+    }
+
+    template <std::size_t Nested, class Stream, class T>
+    Stream& ostream::ostream_impl(const options& params, Stream& out, const T& data) {
+        if constexpr (detail::is_iterable_v<T> && !detail::is_c_string_v<T> &&
+                      ((!detail::has_ostream_operator_v<Stream, T>) || std::is_array_v<T>)) {
+            if constexpr (is_map_v<T>) {
+                print_map<Nested>(params, out, data);
+            } else {
+                print_array<Nested>(params, out, data);
             }
         } else if constexpr (detail::has_ostream_operator_v<Stream, T>) {
-            append(out, detail::quoted_helper(data));
+            append<0, new_line::none>(params, out, detail::quoted_helper(data));
         } else if constexpr (std::is_enum_v<T>) {
-            append(out, static_cast<std::underlying_type_t<T>>(data));
+            append<0, new_line::none>(params, out, static_cast<std::underlying_type_t<T>>(data));
         } else {
             static_assert(detail::has_ostream_operator_v<Stream, T> && !std::is_enum_v<T>,
                           "not support [ostream& operator<<(ostream& out, const T& data)]");
@@ -153,34 +256,34 @@ namespace pretty::detail {
     }
 
     template <std::size_t Nested, class Stream, typename T, typename V, typename>
-    Stream& ostream::ostream_impl(Stream& out, const std::pair<T, V>& data) {
+    Stream& ostream::ostream_impl(const options& params, Stream& out, const std::pair<T, V>& data) {
         if constexpr (detail::has_ostream_operator_v<Stream, std::pair<T, V>>) {
-            append(out, data);
+            append<Nested, new_line::none>(out, data);
         } else {
             ///*if (!!Nested) */ out << '{';
-            ostream_impl<Nested + 1>(out, detail::quoted_helper(data.first));
-            append(out, ": ");
-            ostream_impl<Nested + 1>(out, detail::quoted_helper(data.second));
+            ostream_impl<Nested + 1>(params, out, detail::quoted_helper(data.first));
+            append<0, new_line::none>(params, out, ": ");
+            ostream_impl<Nested + 1>(params, out, detail::quoted_helper(data.second));
             ///*if (!!Nested)*/ out << '}';
         }
         return out;
     }
 
     template <std::size_t Nested, class Stream, typename... Args, typename>
-    Stream& ostream::ostream_impl(Stream& out, const std::tuple<Args...>& data) {
-        append(out, "(");
-        detail::print_tuple_impl<Nested>(out, data, std::index_sequence_for<Args...>{});
-        append(out, ")");
+    Stream& ostream::ostream_impl(const options& params, Stream& out, const std::tuple<Args...>& data) {
+        append<0, new_line::none>(params, out, "(");
+        detail::print_tuple_impl<Nested>(params, out, data, std::index_sequence_for<Args...>{});
+        append<0, new_line::none>(params, out, ")");
         return out;
     }
 
 #if __has_include(<optional>)
     template <std::size_t Nested, class Stream, typename T, typename>
-    Stream& ostream::ostream_impl(Stream& out, const std::optional<T>& data) {
+    Stream& ostream::ostream_impl(const options& params, Stream& out, const std::optional<T>& data) {
         if (data) {
-            ostream_impl<Nested>(out, detail::quoted_helper(data.value()));
+            ostream_impl<Nested>(params, out, detail::quoted_helper(data.value()));
         } else {
-            append(out, "null");
+            append<0, new_line::none>(params, out, "null");
         }
         return out;
     }
@@ -188,12 +291,12 @@ namespace pretty::detail {
 
 #if __has_include(<variant>)
     template <std::size_t Nested, class Stream, typename T, typename... Ts>
-    Stream& ostream::ostream_impl(Stream& out, const std::variant<T, Ts...>& data) {
+    Stream& ostream::ostream_impl(const options& params, Stream& out, const std::variant<T, Ts...>& data) {
         if (data.index() != std::variant_npos) {
-            std::visit([&out](const auto& t) { ostream_impl<Nested>(out, t); }, data);
+            std::visit([&out, &params](const auto& t) { ostream_impl<Nested>(params, out, t); }, data);
             return out;
         }
-        append(out, "VARIANT_NPOS");
+        append<0, new_line::none>(params, out, "VARIANT_NPOS");
         return out;
     }
 #endif

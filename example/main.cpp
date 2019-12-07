@@ -88,9 +88,14 @@ void print_tuple() {
 void print_c_array() {
     int data[] = {1, 2, 3, 4, 5, 6};
     int data2[2][2][2] = {{{1, 2}, {3, 4}}, {{5, 6}, {7, 8}}};
-    pretty::print(std::cout, data) << std::endl;
-    pretty::print(std::cout, "hello") << std::endl;
-    pretty::print(std::cout, data2) << std::endl;
+    pretty::options options;
+    options.prettify = true;
+    options.compact_array = true;
+    options.indent_size = 4;
+
+    pretty::print(std::cout, data, options) << std::endl;
+    pretty::print(std::cout, "hello", options) << std::endl;
+    pretty::print(std::cout, data2, options) << std::endl;
 }
 
 void print_hardcore() {
@@ -99,7 +104,10 @@ void print_hardcore() {
         {"test"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, 4}}},
         {"hello"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, 4}}},
         {"world"s, {{"1"s, 2}, {"2"s, 3}, {"3"s, {}}}}};
-    pretty::print(std::cout, data) << std::endl;
+    pretty::options options;
+    options.prettify = true;
+    options.indent_size = 4;
+    pretty::print(std::cout, data, options) << std::endl;
 }
 
 void print_user_data() {
@@ -125,6 +133,7 @@ void print_enum() {
 
 
 extern void run_test();
+
 
 int main() {
     print_vector();

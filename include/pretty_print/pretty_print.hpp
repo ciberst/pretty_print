@@ -13,8 +13,8 @@ namespace pretty {
      * @param data data
      * @return Stream */
     template <class Stream, class T>
-    constexpr Stream& print(Stream& out, const T& data) {
-        detail::ostream::ostream_impl<0>(out, data);
+    constexpr Stream& print(Stream& out, const T& data, const options& params = options()) {
+        detail::ostream::ostream_impl<0>(params, out, data);
         return out;
     }
 
@@ -22,9 +22,9 @@ namespace pretty {
      * @param data data
      * @return std::string */
     template <class T>
-    std::string print(const T& data) {
+    std::string print(const T& data, const options& params = options()) {
         std::stringstream out;
-        print(out, data);
+        print(out, data, params);
         return out.str();
     }
 
@@ -33,9 +33,9 @@ namespace pretty {
      * @param data data
      * @return Stream */
     template <class Stream, class T>
-    constexpr Stream& print_ti(Stream& out, const T& data) {
+    constexpr Stream& print_ti(Stream& out, const T& data, const options& params = options()) {
         out << typeid(T).name() << "@";
-        print(out, data);
+        print(out, data, params);
         return out;
     }
 
@@ -43,8 +43,8 @@ namespace pretty {
      * @param data data
      * @return std::string */
     template <class T>
-    std::string print_ti(const T& data) {
-        return std::string(typeid(T).name()).append("@").append(print(data));
+    std::string print_ti(const T& data, const options& params = options()) {
+        return std::string(typeid(T).name()).append("@").append(print(data, params));
     }
 
     /** pretty data print
