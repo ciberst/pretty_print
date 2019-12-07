@@ -196,7 +196,7 @@ namespace pretty::detail {
         std::string delimiter;
         using under_layer_t = std::remove_reference_t<decltype(*std::begin(data))>;
         if (params.compact_array) {
-            if (!is_iterable_v<under_layer_t>) {
+            if constexpr (!is_iterable_v<under_layer_t>) {
                 append<0, new_line::none>(params, out, '[');
             } else {
                 append<0, new_line::after_data>(params, out, '[');
@@ -215,7 +215,7 @@ namespace pretty::detail {
                 ostream_impl<Nested + 1>(params, out, detail::quoted_helper(el));
                 delimiter = ", ";
             }
-            if (!is_iterable_v<under_layer_t>) {
+            if constexpr (!is_iterable_v<under_layer_t>) {
                 append<0, new_line::none>(params, out, ']');
             } else {
                 append<Nested, new_line::before_data>(params, out, ']');
