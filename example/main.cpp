@@ -134,6 +134,18 @@ void print_enum() {
 
 extern void run_test();
 
+namespace test {
+    struct X {
+        X() = delete;
+        X(int x) {}
+    };
+
+    [[nodiscard]] std::ostream& stream_to(const X& x, std::ostream& out, pretty::print_tag) {
+        out << "ADL" << std::endl;
+        return out;
+    }
+};  // namespace test
+
 
 int main() {
     print_vector();
@@ -150,5 +162,8 @@ int main() {
 #endif
     print_enum();
     run_test();
+
+    pretty::print(std::cout, test::X(42)) << std::endl;
+
     return 0;
 }

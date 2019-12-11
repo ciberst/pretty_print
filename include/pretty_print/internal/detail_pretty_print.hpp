@@ -15,6 +15,7 @@
 #include <optional>  // std::optional
 #endif
 namespace pretty {
+    struct print_tag {};
     struct options {
         using indent_size_t = uint8_t;
 
@@ -36,7 +37,7 @@ namespace pretty::detail {
         before_data = 1 << 1,
     };
     using new_line_underlying_type_t = std::underlying_type_t<new_line>;
-
+    inline constexpr pretty::print_tag tag;
     inline constexpr bool operator&(new_line lhs, new_line rhs) {
         return !!(static_cast<new_line_underlying_type_t>(lhs) & static_cast<new_line_underlying_type_t>(rhs));
     }
@@ -55,6 +56,16 @@ namespace pretty::detail {
     template <typename Stream, typename T>
     struct has_ostream_operator<Stream, T, std::void_t<decltype(std::declval<Stream&>() << std::declval<const T&>())>>
         : std::true_type {};
+
+    template <typename Stream, typename T, typename = void>
+    struct has_stream_to : std::false_type {};
+
+    template <typename Stream, typename T>
+    struct has_stream_to<
+        Stream, T,
+        std::void_t<decltype(stream_to(*std::declval<const T*>(), std::declval<Stream&>(), pretty::print_tag()))>>
+        : std::true_type {};
+
 
     template <typename Stream, typename T>
     inline constexpr bool has_ostream_operator_v = has_ostream_operator<Stream, T>::value;
@@ -135,13 +146,14 @@ namespace pretty::detail {
 #endif
     };  // struct ostream
 
+
     template <typename Stream>
-    void append_indent(Stream& out, options::indent_size_t indent) {
+    constexpr void append_indent(Stream& out, options::indent_size_t indent) {
         for (options::indent_size_t i = 0; i != indent; ++i) out << ' ';
     }
 
     template <std::size_t Nested, new_line AddNewline, typename Stream>
-    void append(const options& params, Stream& out) {
+    constexpr void append(const options& params, Stream& out) {
         if (params.prettify) {
             if constexpr (!!(AddNewline & new_line::before_data)) out << "\n";
             for (std::size_t i = 0; i != Nested; ++i) {
@@ -152,7 +164,7 @@ namespace pretty::detail {
     }
 
     template <std::size_t Nested, new_line AddNewline, typename Stream, typename T>
-    void append(const options& params, Stream& out, T&& data) {
+    constexpr void append(const options& params, Stream& out, T&& data) {
         if (params.prettify) {
             if constexpr (!!(AddNewline & new_line::before_data)) out << "\n";
             for (std::size_t i = 0; i != Nested; ++i) {
@@ -211,7 +223,7 @@ namespace pretty::detail {
                 }
                 if constexpr (is_iterable_v<under_layer_t>) {
                     append<Nested + 1, new_line::none>(params, out);
-                } 
+                }
                 ostream_impl<Nested + 1>(params, out, detail::quoted_helper(el));
                 delimiter = ", ";
             }
@@ -236,8 +248,10 @@ namespace pretty::detail {
 
     template <std::size_t Nested, class Stream, class T>
     Stream& ostream::ostream_impl(const options& params, Stream& out, const T& data) {
-        if constexpr (detail::is_iterable_v<T> && !detail::is_c_string_v<T> &&
-                      ((!detail::has_ostream_operator_v<Stream, T>) || std::is_array_v<T>)) {
+        if constexpr (has_stream_to<Stream, T>::value) {
+            return stream_to(data, out, tag);
+        } else if constexpr (detail::is_iterable_v<T> && !detail::is_c_string_v<T> &&
+                             ((!detail::has_ostream_operator_v<Stream, T>) || std::is_array_v<T>)) {
             if constexpr (is_map_v<T>) {
                 print_map<Nested>(params, out, data);
             } else {

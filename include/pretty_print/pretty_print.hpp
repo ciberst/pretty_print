@@ -8,6 +8,8 @@
 
 namespace pretty {
 
+    struct print_tag;
+
     /** pretty data print
      * @param out Stream
      * @param data data
