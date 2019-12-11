@@ -29,6 +29,20 @@ namespace pretty {
         constexpr options() = default;
     };
 }  // namespace pretty
+
+namespace prettystd {
+    template <typename Stream, typename T, typename = void>
+    struct has_stream_to : std::false_type {};
+    template <typename Stream, typename T>
+    struct has_stream_to<
+        Stream, T,
+        std::void_t<decltype(stream_to(std::declval<const T&>(), std::declval<Stream&>(), pretty::print_tag()))>>
+        : std::true_type {};
+
+    template <typename Stream, typename T>
+    inline constexpr bool has_stream_to_v = has_stream_to<Stream, T>::value;
+}  // namespace prettystd
+
 namespace pretty::detail {
 
     enum class new_line : uint8_t {
@@ -57,15 +71,9 @@ namespace pretty::detail {
     struct has_ostream_operator<Stream, T, std::void_t<decltype(std::declval<Stream&>() << std::declval<const T&>())>>
         : std::true_type {};
 
-    template <typename Stream, typename T, typename = void>
-    struct has_stream_to : std::false_type {};
+   
 
-    template <typename Stream, typename T>
-    struct has_stream_to<
-        Stream, T,
-        std::void_t<decltype(stream_to(*std::declval<const T*>(), std::declval<Stream&>(), pretty::print_tag()))>>
-        : std::true_type {};
-
+    
 
     template <typename Stream, typename T>
     inline constexpr bool has_ostream_operator_v = has_ostream_operator<Stream, T>::value;
@@ -248,7 +256,8 @@ namespace pretty::detail {
 
     template <std::size_t Nested, class Stream, class T>
     Stream& ostream::ostream_impl(const options& params, Stream& out, const T& data) {
-        if constexpr (has_stream_to<Stream, T>::value) {
+        if constexpr (prettystd::has_stream_to_v<Stream, T>) {
+            using namespace prettystd;
             return stream_to(data, out, tag);
         } else if constexpr (detail::is_iterable_v<T> && !detail::is_c_string_v<T> &&
                              ((!detail::has_ostream_operator_v<Stream, T>) || std::is_array_v<T>)) {

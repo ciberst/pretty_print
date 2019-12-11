@@ -137,9 +137,8 @@ extern void run_test();
 namespace test {
     struct X {
         X() = delete;
-        X(int x) {}
+        explicit X(int x) {}
     };
-
     [[nodiscard]] std::ostream& stream_to(const X& x, std::ostream& out, pretty::print_tag) {
         out << "ADL" << std::endl;
         return out;
