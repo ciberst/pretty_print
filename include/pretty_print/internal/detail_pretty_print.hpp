@@ -37,7 +37,11 @@ namespace pretty::detail {
 
     template <typename T, typename T1, typename... Args>
     struct is_same_any_of {
-        static constexpr bool value = std::is_same_v<T, T1> || (std::is_same_v<T, Args> || ...);
+    private:
+        constexpr static bool check() { return (std::is_same_v<T, T1> || (std::is_same_v<T, Args> || ...)); }
+
+    public:
+        static constexpr bool value = check();
     };
     template <typename T, typename T1, typename... Args>
     inline constexpr bool is_same_any_of_v = is_same_any_of<T, T1, Args...>::value;
