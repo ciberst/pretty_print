@@ -1,6 +1,6 @@
 version: '{build}'
 
-image: 
+os: 
   - Visual Studio 2019
   - Visual Studio 2017
 
@@ -21,6 +21,12 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2017"
       GENERATOR: "Visual Studio 15 2017"
       CONFIG: Release      
+matrix:
+  exclude:
+    - os: Visual Studio 2019
+      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2017"
+    - os: Visual Studio 2017
+      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2019"
 
 build_script:
   - ps: cd example
